@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"godeniter"
+	"godeniter/session"
 	"net/http"
 )
 
@@ -16,10 +17,13 @@ type Project struct {
 // HomeController 首页控制器
 type HomeController struct{}
 
-// Index 渲染首页列表
-func (ctrl *HomeController) Index(c *godeniter.Context) {
-	// 获取 Cookie 中记录的当前登录用户
-	username, _ := c.Cookie("user_session")
+// Index 渲染首页列表 (通过依赖注入直接接收 session.Session)
+func (ctrl *HomeController) Index(c *godeniter.Context, sess session.Session) {
+	// 从 Session 中读取当前登录用户
+	var username string
+	if sess != nil {
+		username = sess.GetString("user_session")
+	}
 
 	// 模拟从数据库或业务层获取的数据
 	projects := []Project{

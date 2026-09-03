@@ -108,20 +108,12 @@ func GetArticleDetail(params router.Params, svc *ArticleService) (int, godeniter
 	}
 }
 
-// CreateArticle 创建文章 (Context 方式)
+// CreateArticle 创建文章 (使用 c.BindAndValidate 自动解析与校验)
 func CreateArticle(c *godeniter.Context, svc *ArticleService) {
 	var req models.CreateArticleRequest
-	if err := c.BindJSON(&req); err != nil {
-		c.Fail(40002, "请求参数 JSON 格式不正确: "+err.Error())
+	if err := c.BindAndValidate(&req); err != nil {
+		c.Fail(40002, "参数校验失败: "+err.Error())
 		return
-	}
-
-	if req.Title == "" || req.Content == "" {
-		c.Fail(40003, "文章标题和内容不能为空")
-		return
-	}
-	if req.Author == "" {
-		req.Author = "匿名用户"
 	}
 
 	article := svc.Create(req.Title, req.Content, req.Author)

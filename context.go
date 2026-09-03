@@ -3,6 +3,7 @@ package godeniter
 import (
 	"encoding/json"
 	"fmt"
+	"godeniter/binding"
 	"godeniter/inject"
 	"godeniter/router"
 	"html/template"
@@ -212,10 +213,25 @@ func (c *Context) DefaultPostForm(key string, defaultValue string) string {
 	return val
 }
 
-// BindJSON 解析并绑定 JSON 格式的请求体到目标结构体指针。
+// BindJSON 解析请求体 JSON 并映射到目标结构体。
 func (c *Context) BindJSON(obj interface{}) error {
 	decoder := json.NewDecoder(c.Req.Body)
 	return decoder.Decode(obj)
+}
+
+// BindAndValidate 根据 Content-Type 自动解析请求数据并执行 struct tag 校验。
+func (c *Context) BindAndValidate(obj interface{}) error {
+	return binding.Bind(c.Req, obj)
+}
+
+// BindQuery 解析 URL 查询参数并自动校验。
+func (c *Context) BindQuery(obj interface{}) error {
+	return binding.BindQuery(c.Req, obj)
+}
+
+// BindForm 解析 POST/PUT 表单数据并自动校验。
+func (c *Context) BindForm(obj interface{}) error {
+	return binding.BindForm(c.Req, obj)
 }
 
 // Status 设置响应状态码。
@@ -324,6 +340,11 @@ func (c *Context) Cookie(name string) (string, error) {
 		return "", err
 	}
 	return cookie.Value, nil
+}
+
+// Session 获取当前请求的 Session 会话对象 (需先挂载 session.Middleware)。
+func (c *Context) Session() (any, bool) {
+	return c.Get("session")
 }
 
 // SetFuncMap 为模板引擎注册自定义函数字典。

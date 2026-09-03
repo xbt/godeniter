@@ -12,11 +12,11 @@ type Article struct {
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 }
 
-// CreateArticleRequest 创建文章请求体 DTO
+// CreateArticleRequest 创建文章请求体 DTO (支持 binding 标签自动校验)
 type CreateArticleRequest struct {
-	Title   string `json:"title"`
-	Content string `json:"content"`
-	Author  string `json:"author"`
+	Title   string `json:"title" binding:"required,min=2,max=50"`
+	Content string `json:"content" binding:"required,min=5"`
+	Author  string `json:"author" binding:"required"`
 }
 
 // UpdateArticleRequest 更新文章请求体 DTO

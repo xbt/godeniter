@@ -37,6 +37,20 @@
   - [x] 数据库写操作 (`Insert`, `Update`, `Delete`)
   - [x] 事务封装 (`Transaction(func(tx *db.Tx) error)`)，支持异常自动回滚
   - [x] 100% 单元测试覆盖 (`db/db_test.go`)
+- [x] **请求参数绑定与轻量验证器 (`binding/`)**
+  - [x] Struct Tag 规则引擎 (`required`, `min`, `max`, `email`, `numeric`)
+  - [x] `BindJSON`, `BindQuery`, `BindForm`, `Bind` 多源绑定
+  - [x] Context 便捷集成 (`c.BindAndValidate(&dto)`)
+  - [x] 100% 单元测试覆盖 (`binding/binding_test.go`)
+- [x] **服务端会话管理 (`session/`)**
+  - [x] 纯标准库实现，类似 PHP `$_SESSION` 体验
+  - [x] 基于 HMAC-SHA256 安全签名的防篡改 `CookieStore`
+  - [x] `godeniter.Session` 全自动装配中间件
+  - [x] Context 与 Injector 深度集成 (`c.Session()`, `func(sess session.Session)`)
+  - [x] 100% 单元测试覆盖 (`session/session_test.go`)
+- [x] **官方 CLI 脚手架工具 (`cmd/godeniter/`)**
+  - [x] `godeniter new <name> --template=api|mvc` 一键生成全新工程
+  - [x] `godeniter version` 与帮助信息输出
 - [x] **单文件打包与 Windows 交付支持**
   - [x] `embed.FS` 内嵌 HTML 模板与静态资源
   - [x] 模式一：前后端分离 RESTful API + SPA 完整 Demo (`examples/01_api_spa/`)
@@ -53,14 +67,12 @@
 
 后续接手开发建议优先考虑以下功能：
 
-1. **结构体表单/参数校验器 (Validator)**：
-   * 基于 struct tag（例如 `binding:"required,min=6"`）实现轻量校验，在 `c.BindJSON()` 或 `c.Bind()` 后自动校验。
-2. **Session / Flash 消息支持**：
-   * 采用基于 HMAC 签名的安全 Cookie 或内存 Store 实现类似 CodeIgniter 的 Session 与 Flash 消息。
-3. **数据库驱动接入样例**：
+1. **数据库驱动接入样例**：
    * 在 `examples/` 目录下创建连接 SQLite (`modernc.org/sqlite`) 或 MySQL 的完整 CRUD 业务模块。
-4. **命令行工具 (CLI Scaffolder)**：
-   * 类似 `php artisan` 或 `codeigniter spark` 的轻量脚手架，用于生成 Controller、Model 与 Migration。
+2. **Flash 消息支持**：
+   * 在 session 基础上增加类似 CodeIgniter 的一次性提示消息（Flash Data）。
+3. **数据库迁移工具 (Migrator)**：
+   * 增加类似 `php artisan migrate` 的 SQL 迁移执行器。
 
 ---
 

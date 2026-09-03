@@ -4,6 +4,7 @@ import (
 	"embed"
 	"godeniter"
 	"godeniter/examples/02_mvc_template/controllers"
+	"godeniter/session"
 	"html/template"
 	"io/fs"
 )
@@ -15,7 +16,11 @@ func main() {
 	// 1. 初始化经典引擎
 	app := godeniter.Classic()
 
-	// 2. 加载嵌入式 HTML 模板 (单文件打包，无需携带外部 views 文件夹)
+	// 2. 挂载会话管理中间件 (基于 HMAC 签名防篡改 CookieStore)
+	store := session.NewCookieStore("godeniter-mvc-secret-key-123456")
+	app.Use(godeniter.Session(store, "mvc_session"))
+
+	// 3. 加载嵌入式 HTML 模板 (单文件打包，无需携带外部 views 文件夹)
 	subViews, _ := fs.Sub(viewsFS, "views")
 	app.SetHTMLTemplate(template.Must(template.ParseFS(subViews, "*.html")))
 

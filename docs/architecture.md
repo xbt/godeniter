@@ -77,10 +77,24 @@
 * 链式拼接 SQL 语句与参数切片（`ToSQL()`），避免 SQL 注入风险。
 * 通过 `db/scanner.go` 中的反射映射，自动将 `*sql.Rows` 扫描到结构体切片或单条结构体（支持 `db:"tag"` 映射或自动驼峰下划线转换）。
 
+### 5. 请求参数绑定与轻量验证器 (`binding/`)
+* 基于 Go 标准库反射解析 Struct Tag（`binding:"required,min=4,max=16,email,numeric"`）。
+* 支持 `BindJSON`、`BindQuery`、`BindForm` 及智能匹配的 `Bind` 方法。
+* 提供清晰精确的 `ValidationError` 与 `FieldError`，可直接通过 `c.BindAndValidate(&dto)` 实现一行代码解析与校验。
+
+### 6. 服务端会话管理 (`session/`)
+* 纯标准库实现，提供类似 PHP `$_SESSION` 的极简体验。
+* 内置 `CookieStore`，基于 HMAC-SHA256 签名机制防篡改，非常适合无状态单文件分布式/免配置交付。
+* 通过 `godeniter.Session(...)` 中间件自动装配并注入到 Context 与 Injector 中。
+
+### 7. 官方 CLI 脚手架工具 (`cmd/godeniter/`)
+* 提供类似 `php artisan` 的命令行项目初始化能力。
+* 命令 `godeniter new <project_name> --template=api|mvc` 可一键生成规范的工程目录骨架、路由配置文件、控制器、模型、前端单页及单文件打包构建脚本。
+
 ---
 
 ## 四、 后续演进路线建议
 
-1. **数据库驱动示例**：可按需编写接入纯 Go SQLite (`modernc.org/sqlite`) 或 MySQL (`github.com/go-sql-driver/mysql`) 的完整增删改查业务模块。
-2. **Session / Cookie 管理**：增加标准库实现的轻量签名 Cookie / 内存 Session 支持。
-3. **验证器 (Validator)**：增加基于 Struct Tag 的数据校验工具（如 `binding:"required,min=6"`）。
+1. **数据库驱动接入样例**：可按需编写接入纯 Go SQLite (`modernc.org/sqlite`) 或 MySQL (`github.com/go-sql-driver/mysql`) 的完整增删改查业务模块。
+2. **Flash 消息支持**：在 session 基础上增加一次性提示消息（Flash Data）。
+3. **数据库迁移工具 (Migrator)**：增加类似 `php artisan migrate` 的 SQL 迁移执行器。

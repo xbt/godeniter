@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"godeniter"
+	"godeniter/session"
 	"net/http"
 )
 
@@ -16,14 +17,16 @@ func (ctrl *UserController) LoginForm(c *godeniter.Context) {
 }
 
 // LoginSubmit 处理表单 POST 提交登录 (POST /login)
-func (ctrl *UserController) LoginSubmit(c *godeniter.Context) {
+func (ctrl *UserController) LoginSubmit(c *godeniter.Context, sess session.Session) {
 	username := c.PostForm("username")
 	password := c.PostForm("password")
 
 	// 简单验证（在实际开发中可配合 db.Table("users").Where(...) 验证密码哈希）
 	if username == "admin" && password == "123456" {
-		// 设置 Session Cookie (有效期 2 小时)
-		c.SetCookie("user_session", username, 7200, "/", "", false, true)
+		// 使用 Session 存储登录态 (自动安全签名)
+		if sess != nil {
+			sess.Set("user_session", username)
+		}
 		// 重定向回首页
 		c.Redirect(http.StatusFound, "/")
 		return
@@ -38,8 +41,10 @@ func (ctrl *UserController) LoginSubmit(c *godeniter.Context) {
 }
 
 // Logout 注销退出 (GET /logout)
-func (ctrl *UserController) Logout(c *godeniter.Context) {
-	// 清除 Cookie
-	c.SetCookie("user_session", "", -1, "/", "", false, true)
+func (ctrl *UserController) Logout(c *godeniter.Context, sess session.Session) {
+	// 清空 Session
+	if sess != nil {
+		sess.Delete("user_session")
+	}
 	c.Redirect(http.StatusFound, "/")
 }

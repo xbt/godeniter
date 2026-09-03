@@ -1,0 +1,30 @@
+# Binaries and build outputs
+dist/
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binaries
+*.test
+*.out
+
+# Databases and runtime data
+*.db
+*.sqlite
+*.sqlite3
+*.log
+
+# IDE and Editor configurations
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Temporary files
+scratch/
+tmp/

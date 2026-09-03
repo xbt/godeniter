@@ -230,6 +230,78 @@ func main() {
 
 ---
 
+## 🛡️ 参数绑定与轻量验证器 (`binding/`)
+
+Godeniter 内置了基于 Struct Tag 的纯标准库数据验证引擎（支持 `required`, `min=N`, `max=N`, `email`, `numeric` 规则）：
+
+```go
+type RegisterForm struct {
+    Username string `json:"username" form:"username" binding:"required,min=4,max=16"`
+    Email    string `json:"email"    form:"email"    binding:"required,email"`
+    Age      int    `json:"age"      form:"age"      binding:"required,min=18"`
+}
+
+app.Post("/register", func(c *godeniter.Context) {
+    var form RegisterForm
+    // 自动根据 Content-Type 解析并执行 struct tag 规则校验
+    if err := c.BindAndValidate(&form); err != nil {
+        c.Fail(40001, "表单验证失败: " + err.Error())
+        return
+    }
+    c.Success(godeniter.H{"user": form.Username})
+})
+```
+
+---
+
+## 🔐 服务端会话管理 (`session/`)
+
+提供类似 PHP `$_SESSION` 的极简体验，基于 HMAC-SHA256 安全签名的防篡改 CookieStore，支持开箱即用的无状态单文件交付：
+
+```go
+import "godeniter/session"
+
+func main() {
+    app := godeniter.Classic()
+
+    // 挂载 Session 中间件
+    store := session.NewCookieStore("my-secret-key-123456")
+    app.Use(godeniter.Session(store, "app_session"))
+
+    // 在 Controller 中直接注入 session.Session 使用
+    app.Post("/login", func(c *godeniter.Context, sess session.Session) {
+        sess.Set("user_id", 1001)
+        sess.Set("username", "ben")
+        c.Redirect(302, "/dashboard")
+    })
+
+    app.Get("/dashboard", func(c *godeniter.Context, sess session.Session) {
+        username := sess.GetString("username")
+        c.String(200, "欢迎回来: " + username)
+    })
+}
+```
+
+---
+
+## 🛠️ 官方 CLI 脚手架工具 (`cmd/godeniter`)
+
+类似于 `php artisan` 或 `codeigniter spark`，支持命令行一键初始化全新独立工程：
+
+```bash
+# 查看版本与帮助
+godeniter version
+godeniter help
+
+# 一键创建前后端分离 API 模版工程
+godeniter new my-api-project --template=api
+
+# 一键创建经典 PHP 风格 MVC 模板渲染工程
+godeniter new my-web-project --template=mvc
+```
+
+---
+
 ## 📂 项目模块结构
 
 * [`inject/`](file:///Users/ben/godeniter/inject/) - 依赖注入容器核心（`Map`, `MapTo`, `Invoke`, `Apply`）
@@ -237,7 +309,10 @@ func main() {
 * [`context.go`](file:///Users/ben/godeniter/context.go) - 请求上下文、洋葱圈流转与多格式渲染（JSON/HTML/Data）
 * [`godeniter.go`](file:///Users/ben/godeniter/godeniter.go) - 核心引擎入口、模板加载与服务启动
 * [`middleware/`](file:///Users/ben/godeniter/middleware/) - 内置中间件（Logger、Recovery、CORS）
+* [`binding/`](file:///Users/ben/godeniter/binding/) - 请求参数绑定与基于 Struct Tag 的轻量验证器
+* [`session/`](file:///Users/ben/godeniter/session/) - 服务端会话管理与安全签名 CookieStore
 * [`db/`](file:///Users/ben/godeniter/db/) - 数据库连接管理与链式 QueryBuilder
+* [`cmd/godeniter/`](file:///Users/ben/godeniter/cmd/godeniter/) - 官方 CLI 脚手架工具 (`godeniter new`)
 * [`examples/01_api_spa/`](file:///Users/ben/godeniter/examples/01_api_spa/) - 模式一：前后端分离 RESTful API + SPA 单页完整 Demo
 * [`examples/02_mvc_template/`](file:///Users/ben/godeniter/examples/02_mvc_template/) - 模式二：经典 PHP 风格服务端渲染 MVC + HTML Template 完整 Demo
 * [`dist/`](file:///Users/ben/godeniter/dist/) - 编译生成的跨平台单文件可执行程序输出目录

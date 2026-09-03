@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"godeniter/inject"
 	"godeniter/router"
+	"godeniter/session"
 	"html/template"
 	"io/fs"
 	"log"
@@ -83,6 +84,29 @@ func Recovery() HandlerFunc {
 			}
 		}()
 		c.Next()
+	}
+}
+
+// Session 返回挂载会话管理的中间件。
+func Session(store session.Store, sessionName ...string) HandlerFunc {
+	name := "godeniter_session"
+	if len(sessionName) > 0 && sessionName[0] != "" {
+		name = sessionName[0]
+	}
+
+	return func(c *Context) {
+		sess, _ := store.Load(c.Req, name)
+		if ds, ok := sess.(*session.DefaultSession); ok {
+			ds.SetResponseWriter(c.Res)
+		}
+		c.Set("session", sess)
+		c.MapTo(sess, (*session.Session)(nil))
+
+		c.Next()
+
+		if sess.IsModified() {
+			_ = sess.Save()
+		}
 	}
 }
 
