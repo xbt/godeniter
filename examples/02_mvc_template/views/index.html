@@ -7,19 +7,22 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background: #f1f5f9; color: #1e293b; padding: 40px 20px; display: flex; justify-content: center; }
-        .container { max-width: 800px; width: 100%; background: #ffffff; border-radius: 12px; padding: 32px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .container { max-width: 900px; width: 100%; background: #ffffff; border-radius: 12px; padding: 32px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 16px; margin-bottom: 24px; }
-        .logo { font-size: 22px; font-weight: 700; color: #0284c7; }
-        .user-nav { font-size: 14px; }
-        .user-nav a { color: #0284c7; text-decoration: none; margin-left: 12px; }
+        .logo { font-size: 22px; font-weight: 700; color: #0284c7; display: flex; align-items: center; gap: 8px; }
+        .user-nav { font-size: 14px; display: flex; align-items: center; gap: 12px; }
+        .user-nav a { color: #0284c7; text-decoration: none; }
         .user-nav a:hover { text-decoration: underline; }
+        .avatar-img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #0284c7; }
         .hero { background: #e0f2fe; border-left: 4px solid #0284c7; padding: 16px; border-radius: 6px; margin-bottom: 24px; font-size: 14px; color: #0369a1; }
-        .section-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; color: #0f172a; }
+        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 16px; }
+        .search-input { padding: 8px 14px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; width: 280px; }
+        .avatar-form { background: #f8fafc; border: 1px dashed #cbd5e1; padding: 12px 16px; border-radius: 8px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; font-size: 13px; }
         table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
         th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
         th { background: #f8fafc; color: #64748b; font-weight: 600; }
         tr:hover { background: #f8fafc; }
-        .btn { display: inline-block; background: #0284c7; color: #fff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; }
+        .btn { display: inline-block; background: #0284c7; color: #fff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; border: none; cursor: pointer; }
         .btn:hover { background: #0369a1; }
         .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #94a3b8; text-align: center; }
     </style>
@@ -30,6 +33,9 @@
             <div class="logo">🚀 {{ .Title }}</div>
             <div class="user-nav">
                 {{ if .CurrentUser }}
+                    {{ if .Avatar }}
+                        <img class="avatar-img" src="{{ .Avatar }}" alt="头像">
+                    {{ end }}
                     <span>你好，<strong>{{ .CurrentUser }}</strong> (管理员)</span>
                     <a href="/logout">退出登录</a>
                 {{ else }}
@@ -40,33 +46,55 @@
         </div>
 
         <div class="hero">
-            💡 本页面采用<strong>经典 PHP 服务端模板渲染 (SSR)</strong> 模式驱动。无需复杂的 Webpack / npm 编译链，模板全部内嵌于二进制中！
+            💡 本页面采用<strong>经典 PHP 服务端模板渲染 (SSR)</strong> 模式驱动。内置 <code>strutil</code> 字符串摘要脱敏、<code>session</code> 安全会话 与 文件上传处理！
         </div>
 
-        <div class="section-title">📊 模拟数据列表 (服务端循环渲染)</div>
+        {{ if .CurrentUser }}
+        <!-- 头像上传表单 -->
+        <form class="avatar-form" action="/upload/avatar" method="POST" enctype="multipart/form-data">
+            <span>👤 上传/更换头像:</span>
+            <input type="file" name="avatar" accept="image/*" required style="font-size: 12px;">
+            <button type="submit" class="btn">提交上传</button>
+        </form>
+        {{ end }}
+
+        <div class="toolbar">
+            <div style="font-size: 16px; font-weight: 600; color: #0f172a;">📊 项目工单列表 (共 {{ .TotalCount }} 条)</div>
+            <form action="/" method="GET">
+                <input type="text" name="keyword" class="search-input" value="{{ .Keyword }}" placeholder="🔍 搜索项目名称...">
+                <button type="submit" class="btn" style="padding: 8px 12px;">搜索</button>
+            </form>
+        </div>
+
         <table>
             <thead>
                 <tr>
-                    <th>序号</th>
+                    <th>工单编号</th>
                     <th>项目名称</th>
-                    <th>负责人</th>
+                    <th>内容摘要 (strutil.Truncate)</th>
+                    <th>联系人 (已脱敏)</th>
                     <th>状态</th>
                 </tr>
             </thead>
             <tbody>
                 {{ range .Projects }}
                 <tr>
-                    <td>{{ .ID }}</td>
+                    <td><code>{{ .Code }}</code></td>
                     <td><strong>{{ .Name }}</strong></td>
-                    <td>{{ .Owner }}</td>
+                    <td style="color: #64748b;">{{ .Summary }}</td>
+                    <td><span style="color: #0284c7;">{{ .OwnerMask }}</span></td>
                     <td><span style="color: #10b981; font-weight: 600;">● {{ .Status }}</span></td>
+                </tr>
+                {{ else }}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: #94a3b8; padding: 24px;">没有找到匹配的项目记录。</td>
                 </tr>
                 {{ end }}
             </tbody>
         </table>
 
         <div class="footer">
-            Godeniter MVC 经典模板渲染引擎 &bull; 类似 PHP CodeIgniter 的快速开发体验
+            Godeniter MVC 经典模板渲染引擎 &bull; 类似 PHP CodeIgniter 的极简开发体验
         </div>
     </div>
 </body>

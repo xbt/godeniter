@@ -6,8 +6,10 @@ import (
 	"godeniter/binding"
 	"godeniter/inject"
 	"godeniter/router"
+	"godeniter/utils/upload"
 	"html/template"
 	"math"
+	"mime/multipart"
 	"net/http"
 	"reflect"
 )
@@ -232,6 +234,55 @@ func (c *Context) BindQuery(obj interface{}) error {
 // BindForm 解析 POST/PUT 表单数据并自动校验。
 func (c *Context) BindForm(obj interface{}) error {
 	return binding.BindForm(c.Req, obj)
+}
+
+// FormFile 从 multipart/form-data 表单中获取上传的单文件。
+func (c *Context) FormFile(name string) (*multipart.FileHeader, error) {
+	if c.Req.MultipartForm == nil {
+		if err := c.Req.ParseMultipartForm(32 << 20); err != nil { // 默认最大 32MB 内存缓存
+			return nil, err
+		}
+	}
+	f, fh, err := c.Req.FormFile(name)
+	if err != nil {
+		return nil, err
+	}
+	f.Close()
+	return fh, nil
+}
+
+// FormFiles 从 multipart/form-data 表单中获取指定字段名的多个上传文件列表。
+func (c *Context) FormFiles(name string) ([]*multipart.FileHeader, error) {
+	if c.Req.MultipartForm == nil {
+		if err := c.Req.ParseMultipartForm(32 << 20); err != nil {
+			return nil, err
+		}
+	}
+	if c.Req.MultipartForm != nil && c.Req.MultipartForm.File != nil {
+		if files, ok := c.Req.MultipartForm.File[name]; ok {
+			return files, nil
+		}
+	}
+	return nil, http.ErrMissingFile
+}
+
+// MultipartForm 获取解析后的完整 MultipartForm 表单。
+func (c *Context) MultipartForm() (*multipart.Form, error) {
+	err := c.Req.ParseMultipartForm(32 << 20)
+	return c.Req.MultipartForm, err
+}
+
+// UploadOptions 为 utils/upload.Options 的类型别名，方便直接调用。
+type UploadOptions = upload.Options
+
+// SaveUploadedFile 保存上传文件到指定的绝对/相对路径。
+func (c *Context) SaveUploadedFile(file *multipart.FileHeader, dst string) error {
+	return upload.SaveUploadedFile(file, dst)
+}
+
+// SaveUploadedFileWithOptions 按照规则校验并保存上传文件，返回保存后的文件路径。
+func (c *Context) SaveUploadedFileWithOptions(file *multipart.FileHeader, opts UploadOptions) (string, error) {
+	return upload.SaveUploadedFileWithOptions(file, opts)
 }
 
 // Status 设置响应状态码。

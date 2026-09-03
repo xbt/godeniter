@@ -87,7 +87,11 @@
 * 内置 `CookieStore`，基于 HMAC-SHA256 签名机制防篡改，非常适合无状态单文件分布式/免配置交付。
 * 通过 `godeniter.Session(...)` 中间件自动装配并注入到 Context 与 Injector 中。
 
-### 7. 官方 CLI 脚手架工具 (`cmd/godeniter/`)
+### 7. 通用工具库体系 (`utils/`)
+* **`utils/str/`**：类似 PHP 经典辅助函数，提供高强度随机串生成、UUIDv4、大小驼峰/蛇形/短横线互转、UTF-8 字符截断、敏感信息脱敏（手机号/邮箱/身份证）与安全哈希。
+* **`utils/upload/`**：对标 CodeIgniter Upload 类，提供上传文件安全存储、大小限制与扩展名白名单拦截器。
+
+### 8. 官方 CLI 脚手架工具 (`cmd/godeniter/`)
 * 提供类似 `php artisan` 的命令行项目初始化能力。
 * 命令 `godeniter new <project_name> --template=api|mvc` 可一键生成规范的工程目录骨架、路由配置文件、控制器、模型、前端单页及单文件打包构建脚本。
 

@@ -22,11 +22,19 @@ type whereClause struct {
 	args        []any  // 对应的实参列表
 }
 
-// QueryBuilder 提供了类似 CodeIgniter / Laravel 风格的链式 SQL 构造器。
+// joinClause 表示一个 JOIN 联表子句。
+type joinClause struct {
+	joinType  string // "LEFT", "RIGHT", "INNER", "CROSS"
+	tableName string // 联表名称 (如 "categories" 或 "categories c")
+	on        string // ON 关联条件 (如 "users.cat_id = c.id")
+}
+
+// QueryBuilder 提供了类似 CodeIgniter 3 ActiveRecord 风格的强大链式 SQL 构造器。
 type QueryBuilder struct {
 	executor  SQLExecutor
 	tableName string
 	fields    []string
+	joins     []joinClause
 	wheres    []whereClause
 	orderBys  []string
 	groupBys  []string
@@ -41,6 +49,7 @@ func newQueryBuilder(executor SQLExecutor, tableName string) *QueryBuilder {
 		executor:  executor,
 		tableName: tableName,
 		fields:    []string{"*"},
+		joins:     make([]joinClause, 0),
 		wheres:    make([]whereClause, 0),
 		orderBys:  make([]string, 0),
 		groupBys:  make([]string, 0),
@@ -61,6 +70,35 @@ func (qb *QueryBuilder) Select(fields ...string) *QueryBuilder {
 	return qb
 }
 
+// Join 添加通用的联表查询。
+// joinType: "LEFT", "RIGHT", "INNER"。
+// 示例：
+//
+//	qb.Join("profiles", "users.id = profiles.user_id", "LEFT")
+func (qb *QueryBuilder) Join(table string, on string, joinType string) *QueryBuilder {
+	qb.joins = append(qb.joins, joinClause{
+		joinType:  strings.ToUpper(strings.TrimSpace(joinType)),
+		tableName: table,
+		on:        on,
+	})
+	return qb
+}
+
+// LeftJoin 添加 LEFT JOIN 联表查询。
+func (qb *QueryBuilder) LeftJoin(table string, on string) *QueryBuilder {
+	return qb.Join(table, on, "LEFT")
+}
+
+// RightJoin 添加 RIGHT JOIN 联表查询。
+func (qb *QueryBuilder) RightJoin(table string, on string) *QueryBuilder {
+	return qb.Join(table, on, "RIGHT")
+}
+
+// InnerJoin 添加 INNER JOIN 联表查询。
+func (qb *QueryBuilder) InnerJoin(table string, on string) *QueryBuilder {
+	return qb.Join(table, on, "INNER")
+}
+
 // Where 添加一个 AND 连接的过滤条件。
 // 示例：
 //
@@ -75,9 +113,6 @@ func (qb *QueryBuilder) Where(condition string, args ...any) *QueryBuilder {
 }
 
 // OrWhere 添加一个 OR 连接的过滤条件。
-// 示例：
-//
-//	qb.Where("role = ?", "admin").OrWhere("role = ?", "super_admin")
 func (qb *QueryBuilder) OrWhere(condition string, args ...any) *QueryBuilder {
 	qb.wheres = append(qb.wheres, whereClause{
 		conjunction: "OR",
@@ -85,6 +120,24 @@ func (qb *QueryBuilder) OrWhere(condition string, args ...any) *QueryBuilder {
 		args:        args,
 	})
 	return qb
+}
+
+// Like 添加 LIKE 模糊搜索匹配 (AND 连接)。
+// 示例：
+//
+//	qb.Like("title", "%golang%") -> WHERE title LIKE ?
+func (qb *QueryBuilder) Like(column string, pattern string) *QueryBuilder {
+	return qb.Where(fmt.Sprintf("%s LIKE ?", column), pattern)
+}
+
+// OrLike 添加 OR LIKE 模糊搜索匹配。
+func (qb *QueryBuilder) OrLike(column string, pattern string) *QueryBuilder {
+	return qb.OrWhere(fmt.Sprintf("%s LIKE ?", column), pattern)
+}
+
+// NotLike 添加 NOT LIKE 匹配。
+func (qb *QueryBuilder) NotLike(column string, pattern string) *QueryBuilder {
+	return qb.Where(fmt.Sprintf("%s NOT LIKE ?", column), pattern)
 }
 
 // WhereIn 便捷生成 WHERE column IN (?, ?, ...) 条件。
@@ -99,6 +152,44 @@ func (qb *QueryBuilder) WhereIn(column string, values []any) *QueryBuilder {
 	}
 	cond := fmt.Sprintf("%s IN (%s)", column, strings.Join(placeholders, ", "))
 	return qb.Where(cond, values...)
+}
+
+// WhereNotIn 便捷生成 WHERE column NOT IN (?, ?, ...) 条件。
+func (qb *QueryBuilder) WhereNotIn(column string, values []any) *QueryBuilder {
+	if len(values) == 0 {
+		return qb
+	}
+	placeholders := make([]string, len(values))
+	for i := range values {
+		placeholders[i] = "?"
+	}
+	cond := fmt.Sprintf("%s NOT IN (%s)", column, strings.Join(placeholders, ", "))
+	return qb.Where(cond, values...)
+}
+
+// WhereBetween 添加 WHERE column BETWEEN ? AND ? 范围条件。
+func (qb *QueryBuilder) WhereBetween(column string, min, max any) *QueryBuilder {
+	return qb.Where(fmt.Sprintf("%s BETWEEN ? AND ?", column), min, max)
+}
+
+// WhereNotBetween 添加 WHERE column NOT BETWEEN ? AND ? 范围条件。
+func (qb *QueryBuilder) WhereNotBetween(column string, min, max any) *QueryBuilder {
+	return qb.Where(fmt.Sprintf("%s NOT BETWEEN ? AND ?", column), min, max)
+}
+
+// WhereNull 添加 WHERE column IS NULL 条件。
+func (qb *QueryBuilder) WhereNull(column string) *QueryBuilder {
+	return qb.Where(fmt.Sprintf("%s IS NULL", column))
+}
+
+// WhereNotNull 添加 WHERE column IS NOT NULL 条件。
+func (qb *QueryBuilder) WhereNotNull(column string) *QueryBuilder {
+	return qb.Where(fmt.Sprintf("%s IS NOT NULL", column))
+}
+
+// WhereRaw 添加原生复杂 WHERE 子句。
+func (qb *QueryBuilder) WhereRaw(rawSql string, args ...any) *QueryBuilder {
+	return qb.Where(rawSql, args...)
 }
 
 // OrderBy 设置排序规则。
@@ -148,6 +239,13 @@ func (qb *QueryBuilder) ToSQL() (string, []any) {
 	sqlStr.WriteString(" FROM ")
 	sqlStr.WriteString(qb.tableName)
 
+	// 构建 JOIN
+	if len(qb.joins) > 0 {
+		for _, j := range qb.joins {
+			sqlStr.WriteString(fmt.Sprintf(" %s JOIN %s ON %s", j.joinType, j.tableName, j.on))
+		}
+	}
+
 	// 构建 WHERE
 	if len(qb.wheres) > 0 {
 		sqlStr.WriteString(" WHERE ")
@@ -196,10 +294,6 @@ func (qb *QueryBuilder) ToSQL() (string, []any) {
 }
 
 // Find 执行查询并将结果集扫描绑定到 destSlicePtr 中。
-// 示例：
-//
-//	var users []User
-//	err := db.Table("users").Where("status = ?", 1).Find(&users)
 func (qb *QueryBuilder) Find(destSlicePtr any) error {
 	query, args := qb.ToSQL()
 	rows, err := qb.executor.Query(query, args...)
@@ -212,11 +306,6 @@ func (qb *QueryBuilder) Find(destSlicePtr any) error {
 }
 
 // First 执行查询并返回匹配的第一条记录（自动附加 LIMIT 1）。
-// 若未找到记录将返回 sql.ErrNoRows。
-// 示例：
-//
-//	var user User
-//	err := db.Table("users").Where("id = ?", 1).First(&user)
 func (qb *QueryBuilder) First(destStructPtr any) error {
 	qb.Limit(1)
 	query, args := qb.ToSQL()
@@ -241,9 +330,72 @@ func (qb *QueryBuilder) Count() (int64, error) {
 	return count, err
 }
 
+// Sum 统计指定列的总和数值。
+func (qb *QueryBuilder) Sum(column string) (float64, error) {
+	oldFields := qb.fields
+	qb.fields = []string{fmt.Sprintf("COALESCE(SUM(%s), 0) as total_sum", column)}
+	query, args := qb.ToSQL()
+	qb.fields = oldFields
+
+	var sum float64
+	err := qb.executor.QueryRow(query, args...).Scan(&sum)
+	return sum, err
+}
+
+// Avg 统计指定列的平均值。
+func (qb *QueryBuilder) Avg(column string) (float64, error) {
+	oldFields := qb.fields
+	qb.fields = []string{fmt.Sprintf("COALESCE(AVG(%s), 0) as total_avg", column)}
+	query, args := qb.ToSQL()
+	qb.fields = oldFields
+
+	var avg float64
+	err := qb.executor.QueryRow(query, args...).Scan(&avg)
+	return avg, err
+}
+
+// Increment 对指定数值列进行快捷自增更新 (类似 CI3 $this->db->set('views', 'views+1', FALSE))。
+// 示例: qb.Where("id = ?", 1).Increment("views", 1)
+func (qb *QueryBuilder) Increment(column string, amount ...int64) (int64, error) {
+	step := int64(1)
+	if len(amount) > 0 && amount[0] != 0 {
+		step = amount[0]
+	}
+
+	if len(qb.wheres) == 0 {
+		return 0, fmt.Errorf("db: 出于安全考虑，Increment 必须指定 WHERE 条件")
+	}
+
+	var sqlStr strings.Builder
+	sqlStr.WriteString(fmt.Sprintf("UPDATE %s SET %s = %s + %d", qb.tableName, column, column, step))
+	sqlStr.WriteString(" WHERE ")
+
+	args := make([]any, 0)
+	for i, w := range qb.wheres {
+		if i > 0 {
+			sqlStr.WriteString(" " + w.conjunction + " ")
+		}
+		sqlStr.WriteString(w.condition)
+		args = append(args, w.args...)
+	}
+
+	res, err := qb.executor.Exec(sqlStr.String(), args...)
+	if err != nil {
+		return 0, err
+	}
+	return res.RowsAffected()
+}
+
+// Decrement 对指定数值列进行快捷自减更新。
+func (qb *QueryBuilder) Decrement(column string, amount ...int64) (int64, error) {
+	step := int64(1)
+	if len(amount) > 0 && amount[0] != 0 {
+		step = amount[0]
+	}
+	return qb.Increment(column, -step)
+}
+
 // Insert 插入一条新记录到当前表。
-// data 可以为 map[string]any 或 struct/结构体指针。
-// 返回新插入记录的自增 ID（若支持）以及可能的错误。
 func (qb *QueryBuilder) Insert(data any) (int64, error) {
 	cols, vals, err := extractInsertData(data)
 	if err != nil {
@@ -273,9 +425,48 @@ func (qb *QueryBuilder) Insert(data any) (int64, error) {
 	return lastID, nil
 }
 
+// InsertBatch 批量插入多条记录 (支持 []map 或 []struct)。
+func (qb *QueryBuilder) InsertBatch(records []any) (int64, error) {
+	if len(records) == 0 {
+		return 0, nil
+	}
+
+	firstCols, _, err := extractInsertData(records[0])
+	if err != nil {
+		return 0, err
+	}
+
+	allVals := make([]any, 0, len(records)*len(firstCols))
+	valuePlaceholders := make([]string, len(records))
+
+	for i, record := range records {
+		_, vals, err := extractInsertData(record)
+		if err != nil {
+			return 0, err
+		}
+		allVals = append(allVals, vals...)
+
+		rowPlaceholders := make([]string, len(firstCols))
+		for p := range rowPlaceholders {
+			rowPlaceholders[p] = "?"
+		}
+		valuePlaceholders[i] = "(" + strings.Join(rowPlaceholders, ", ") + ")"
+	}
+
+	query := fmt.Sprintf("INSERT INTO %s (%s) VALUES %s",
+		qb.tableName,
+		strings.Join(firstCols, ", "),
+		strings.Join(valuePlaceholders, ", "),
+	)
+
+	res, err := qb.executor.Exec(query, allVals...)
+	if err != nil {
+		return 0, err
+	}
+	return res.RowsAffected()
+}
+
 // Update 根据当前 WHERE 条件更新数据。
-// data 可以为 map[string]any 或 struct。
-// 返回受影响的行数。
 func (qb *QueryBuilder) Update(data any) (int64, error) {
 	cols, vals, err := extractInsertData(data)
 	if err != nil {
@@ -320,7 +511,6 @@ func (qb *QueryBuilder) Update(data any) (int64, error) {
 }
 
 // Delete 根据当前 WHERE 条件删除数据。
-// 返回受影响的行数。
 func (qb *QueryBuilder) Delete() (int64, error) {
 	var sqlStr strings.Builder
 	sqlStr.WriteString("DELETE FROM ")

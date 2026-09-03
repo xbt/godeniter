@@ -129,52 +129,125 @@ func main() {
 
 ---
 
-## 🗄️ 数据库操作 (QueryBuilder)
+---
 
-基于 Go 标准库 `database/sql`，支持类似 CodeIgniter 3 的链式调用：
+## 🗄️ 数据库操作与 ActiveRecord (类似 CodeIgniter 3 增强版)
+
+基于 Go 标准库 `database/sql`，提供极度舒适的链式构造器与一键分页能力：
 
 ```go
 type User struct {
     ID       int    `db:"id"`
     Username string `db:"username"`
+    Email    string `db:"email"`
     Age      int    `db:"age"`
+    Avatar   string `db:"avatar"`
 }
 
-// 1. 查询多条
+// 1. 模糊搜索 (Like) 与范围过滤 (Between)
 var users []User
 err := db.Table("users").
-    Select("id", "username", "age").
-    Where("age >= ?", 18).
-    OrderBy("id DESC").
-    Limit(10).
+    Select("users.id", "users.username", "profiles.avatar").
+    LeftJoin("profiles", "users.id = profiles.user_id").
+    Where("status = ?", 1).
+    Like("username", "%admin%").
+    WhereBetween("age", 18, 60).
+    OrderBy("users.id DESC").
     Find(&users)
 
-// 2. 查询单条
-var user User
-err := db.Table("users").Where("id = ?", 1).First(&user)
+// 2. 一键分页查询 (Paginate)
+var list []User
+pager, err := db.Table("users").
+    Where("status = ?", 1).
+    OrderBy("id DESC").
+    Paginate(1, 10, &list)
+// pager 包含: Total (总数), TotalPages (总页数), Page (当前页), PageSize, HasNext, HasPrev
 
-// 3. 插入记录 (支持 map 或 struct)
-id, err := db.Table("users").Insert(map[string]any{
-    "username": "ben",
-    "age":      28,
-})
+// 3. 聚合统计与快捷自增 (Increment / Sum / Avg / Count)
+count, _ := db.Table("users").Count()
+sumViews, _ := db.Table("articles").Sum("views")
+// 快捷自增阅读量
+rows, _ := db.Table("articles").Where("id = ?", 1).Increment("views", 1)
 
-// 4. 更新记录
-rows, err := db.Table("users").Where("id = ?", 1).Update(map[string]any{
-    "age": 29,
-})
+// 4. 批量插入 (InsertBatch)
+records := []any{
+    map[string]any{"username": "user1", "age": 20},
+    map[string]any{"username": "user2", "age": 22},
+}
+_, err = db.Table("users").InsertBatch(records)
 
-// 5. 事务处理
+// 5. 事务保护 (自动 Commit / Panic / Error 回滚)
 err := db.Transaction(func(tx *db.Tx) error {
-    _, err := tx.Table("accounts").Where("id = ?", 1).Update(...)
+    _, err := tx.Table("accounts").Where("id = ?", 1).Update(map[string]any{"balance": 500})
     return err
 })
 ```
 
-> **数据库驱动引入说明**：  
-> 框架底层为纯标准库 0 依赖，在使用具体数据库时只需在入口匿名导入标准驱动：
-> * **MySQL**: `import _ "github.com/go-sql-driver/mysql"`
-> * **SQLite**: `import _ "modernc.org/sqlite"`（纯 Go 实现，无 CGO 依赖，完美支持跨平台交叉编译）。
+---
+
+## 📁 文件上传与安全存储 (`utils/upload`)
+
+提供对标 CodeIgniter Upload 类的一行代码上传与安全校验：
+
+```go
+import "godeniter/utils/upload"
+
+app.Post("/upload/avatar", func(c *godeniter.Context) {
+    file, err := c.FormFile("avatar")
+    if err != nil {
+        c.Fail(400, "请选择文件")
+        return
+    }
+
+    opts := upload.Options{
+        SaveDir:     "./uploads/avatars",
+        MaxBytes:    2 * 1024 * 1024, // 限制 2MB
+        AllowedExts: []string{".jpg", ".png", ".jpeg"},
+        AutoRename:  true, // 自动重命名为 20260903_120000_random.jpg
+    }
+
+    savedPath, err := c.SaveUploadedFileWithOptions(file, opts)
+    if err != nil {
+        c.Fail(500, err.Error())
+        return
+    }
+
+    c.Success(godeniter.H{"url": "/" + savedPath})
+})
+```
+
+---
+
+## 🔤 字符串与安全辅助工具库 (`utils/str`)
+
+对标 CodeIgniter `string_helper`, `text_helper`, `security_helper`：
+
+```go
+import "godeniter/utils/str"
+
+// 1. 随机生成
+code := str.RandomNumeric(6)     // 6位数字验证码 (如 "839201")
+token := str.Random(32)          // 32位安全 Token
+uuid := str.UUID()               // 标准 UUIDv4
+
+// 2. 命名互转
+snake := str.SnakeCase("UserProfile")    // "user_profile"
+camel := str.CamelCase("user_profile", false) // "userProfile"
+kebab := str.KebabCase("UserProfile")    // "user-profile"
+
+// 3. 文本处理与中文截断
+summary := str.Truncate("这是一篇非常长的文章正文...", 10, "...")
+sub := str.Substr("你好Godeniter世界", 2, 9) // "Godeniter"
+
+// 4. 敏感信息脱敏
+phone := str.MaskPhone("13812345678") // "138****5678"
+email := str.MaskEmail("user@godeniter.dev") // "u***r@godeniter.dev"
+idCard := str.MaskIDCard("110101199003072345") // "1101**********2345"
+
+// 5. 哈希与 XSS 安全过滤
+md5Val := str.MD5("123456")
+safeHTML := str.XSSFilter("<script>alert(1)</script>")
+```
 
 ---
 
@@ -304,15 +377,22 @@ godeniter new my-web-project --template=mvc
 
 ## 📂 项目模块结构
 
-* [`inject/`](file:///Users/ben/godeniter/inject/) - 依赖注入容器核心（`Map`, `MapTo`, `Invoke`, `Apply`）
-* [`router/`](file:///Users/ben/godeniter/router/) - 前缀树（Trie）路由器、路由分组与参数解析
-* [`context.go`](file:///Users/ben/godeniter/context.go) - 请求上下文、洋葱圈流转与多格式渲染（JSON/HTML/Data）
-* [`godeniter.go`](file:///Users/ben/godeniter/godeniter.go) - 核心引擎入口、模板加载与服务启动
-* [`middleware/`](file:///Users/ben/godeniter/middleware/) - 内置中间件（Logger、Recovery、CORS）
-* [`binding/`](file:///Users/ben/godeniter/binding/) - 请求参数绑定与基于 Struct Tag 的轻量验证器
-* [`session/`](file:///Users/ben/godeniter/session/) - 服务端会话管理与安全签名 CookieStore
-* [`db/`](file:///Users/ben/godeniter/db/) - 数据库连接管理与链式 QueryBuilder
-* [`cmd/godeniter/`](file:///Users/ben/godeniter/cmd/godeniter/) - 官方 CLI 脚手架工具 (`godeniter new`)
-* [`examples/01_api_spa/`](file:///Users/ben/godeniter/examples/01_api_spa/) - 模式一：前后端分离 RESTful API + SPA 单页完整 Demo
-* [`examples/02_mvc_template/`](file:///Users/ben/godeniter/examples/02_mvc_template/) - 模式二：经典 PHP 风格服务端渲染 MVC + HTML Template 完整 Demo
-* [`dist/`](file:///Users/ben/godeniter/dist/) - 编译生成的跨平台单文件可执行程序输出目录
+* **根目录核心模块**（极简纯粹，仅保留启动与核心上下文）：
+  * [`godeniter.go`](file:///Users/ben/godeniter/godeniter.go) - 核心引擎入口、模板加载与服务启动
+  * [`context.go`](file:///Users/ben/godeniter/context.go) - 请求上下文、洋葱圈流转与多格式渲染（JSON/HTML/Data）
+  * [`response_writer.go`](file:///Users/ben/godeniter/response_writer.go) - 状态码与响应体双重拦截包装器
+* **专业功能子模块**：
+  * [`inject/`](file:///Users/ben/godeniter/inject/) - 依赖注入容器核心（`Map`, `MapTo`, `Invoke`, `Apply`）
+  * [`router/`](file:///Users/ben/godeniter/router/) - 前缀树（Trie）路由器、路由分组与参数解析
+  * [`db/`](file:///Users/ben/godeniter/db/) - 数据库连接管理与增强型 ActiveRecord QueryBuilder (Like, Join, Paginate)
+  * [`session/`](file:///Users/ben/godeniter/session/) - 服务端会话管理与安全签名 CookieStore
+  * [`binding/`](file:///Users/ben/godeniter/binding/) - 请求参数绑定与基于 Struct Tag 的轻量验证器
+  * [`middleware/`](file:///Users/ben/godeniter/middleware/) - 内置中间件（Logger、Recovery、CORS）
+* **通用工具集 (`utils/`)**：
+  * [`utils/str/`](file:///Users/ben/godeniter/utils/str/) - 字符串处理、脱敏、哈希与随机生成
+  * [`utils/upload/`](file:///Users/ben/godeniter/utils/upload/) - 文件上传安全处理类与存储校验器
+* **命令行与开箱即用示例**：
+  * [`cmd/godeniter/`](file:///Users/ben/godeniter/cmd/godeniter/) - 官方 CLI 脚手架工具 (`godeniter new`)
+  * [`examples/01_api_spa/`](file:///Users/ben/godeniter/examples/01_api_spa/) - 模式一：前后端分离 RESTful API + SPA 单页 (带文件上传与分页) 完整 Demo
+  * [`examples/02_mvc_template/`](file:///Users/ben/godeniter/examples/02_mvc_template/) - 模式二：经典 PHP 风格服务端渲染 MVC + HTML Template (带头像上传与搜索) 完整 Demo
+  * [`dist/`](file:///Users/ben/godeniter/dist/) - 编译生成的跨平台单文件可执行程序输出目录

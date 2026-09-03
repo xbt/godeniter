@@ -3,170 +3,627 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Godeniter 2.0 - 前后端分离 (API + SPA) 演示</title>
+    <title>Godeniter 2.0 - 开发者全功能手册与交互式控制台 (对标 CodeIgniter)</title>
     <style>
         :root {
-            --primary: #3b82f6;
-            --primary-hover: #2563eb;
+            --primary: #0284c7;
+            --primary-hover: #0369a1;
+            --ci-red: #ea580c;
             --bg: #0f172a;
+            --sidebar-bg: #1e293b;
             --card-bg: #1e293b;
+            --border: #334155;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --border: #334155;
-            --danger: #ef4444;
+            --code-bg: #0b1120;
+            --accent: #38bdf8;
             --success: #10b981;
+            --danger: #ef4444;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background: var(--bg); color: var(--text-main); min-height: 100vh; padding: 30px 20px; display: flex; justify-content: center; }
-        .container { max-width: 900px; width: 100%; }
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
-        .logo { font-size: 24px; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
-        .tag { background: #0284c7; font-size: 11px; padding: 2px 8px; border-radius: 99px; color: #fff; }
-        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
-        .card h2 { font-size: 18px; margin-bottom: 16px; color: #fff; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        body { background: var(--bg); color: var(--text-main); height: 100vh; display: flex; overflow: hidden; }
+
+        /* 左侧侧边栏导航 (对标 CodeIgniter User Guide 目录) */
+        aside { width: 280px; background: var(--sidebar-bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .logo { font-size: 18px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
+        .badge { background: var(--ci-red); font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600; color: #fff; }
+        .nav-list { flex: 1; overflow-y: auto; padding: 12px 8px; list-style: none; }
+        .nav-group-title { font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; padding: 12px 12px 6px; letter-spacing: 0.5px; }
+        .nav-item { padding: 8px 12px; border-radius: 6px; font-size: 13px; color: #cbd5e1; cursor: pointer; display: flex; align-items: center; gap: 8px; margin-bottom: 2px; transition: all 0.2s; }
+        .nav-item:hover { background: #334155; color: #fff; }
+        .nav-item.active { background: var(--primary); color: #fff; font-weight: 600; }
+
+        /* 右侧主工作区 */
+        main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        header { height: 60px; background: var(--sidebar-bg); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; flex-shrink: 0; }
+        .header-title { font-size: 16px; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 8px; }
+        .header-links a { color: var(--accent); text-decoration: none; font-size: 13px; margin-left: 16px; }
+
+        .content-body { flex: 1; overflow-y: auto; padding: 24px; }
+        .section-view { display: none; }
+        .section-view.active { display: block; animation: fadeIn 0.2s ease; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 卡片与网格 */
+        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+        .card-title { font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+        .desc { font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-bottom: 16px; }
+        .ci-compare { background: #431407; border-left: 4px solid var(--ci-red); padding: 12px 16px; border-radius: 4px; margin-bottom: 16px; font-size: 13px; color: #fed7aa; }
+
+        /* 代码块展示与一键复制 */
+        .code-container { position: relative; margin-bottom: 16px; }
+        pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; font-size: 13px; line-height: 1.5; color: #38bdf8; }
+        .btn-copy { position: absolute; top: 8px; right: 8px; background: #334155; border: 1px solid var(--border); color: #cbd5e1; padding: 4px 8px; font-size: 11px; border-radius: 4px; cursor: pointer; }
+        .btn-copy:hover { background: var(--primary); color: #fff; }
+
+        /* 表单与交互控件 */
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 14px; }
         .form-group { margin-bottom: 14px; }
-        label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; }
-        input[type="text"], textarea { width: 100%; padding: 10px 14px; background: #0f172a; border: 1px solid var(--border); border-radius: 8px; color: #fff; font-size: 14px; }
-        input:focus, textarea:focus { outline: none; border-color: var(--primary); }
-        button { background: var(--primary); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-        button:hover { background: var(--primary-hover); }
-        .article-item { background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: flex-start; }
-        .article-title { font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 6px; }
-        .article-meta { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; }
-        .article-content { font-size: 14px; color: #cbd5e1; line-height: 1.6; }
-        .btn-del { background: transparent; color: var(--danger); border: 1px solid var(--danger); padding: 4px 10px; border-radius: 6px; font-size: 12px; }
-        .btn-del:hover { background: var(--danger); color: #fff; }
-        .notice { font-size: 12px; color: #38bdf8; margin-top: 8px; }
+        label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; }
+        input[type="text"], textarea, select { width: 100%; padding: 9px 12px; background: #0f172a; border: 1px solid var(--border); border-radius: 6px; color: #fff; font-size: 13px; }
+        input:focus, textarea:focus, select:focus { outline: none; border-color: var(--primary); }
+        .btn { background: var(--primary); color: #fff; border: none; padding: 9px 18px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+        .btn:hover { background: var(--primary-hover); }
+        .btn-danger { background: var(--danger); }
+        .btn-danger:hover { background: #dc2626; }
+
+        /* 列表展示 */
+        .article-card { background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 10px; display: flex; gap: 14px; }
+        .article-img { width: 90px; height: 68px; border-radius: 4px; object-fit: cover; background: #334155; flex-shrink: 0; }
+        .pagination { display: flex; justify-content: center; gap: 8px; margin-top: 16px; align-items: center; }
+        .page-btn { background: #0f172a; border: 1px solid var(--border); padding: 5px 12px; border-radius: 4px; color: #fff; cursor: pointer; font-size: 12px; }
+        .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
+    <!-- 左侧文档与示例导航栏 -->
+    <aside>
+        <div class="sidebar-header">
             <div class="logo">
-                Godeniter 2.0 <span class="tag">REST API + SPA 模式</span>
+                🚀 Godeniter 2.0
             </div>
-            <div>
-                <a href="/api/v1/articles" target="_blank" style="color: #38bdf8; text-decoration: none; font-size: 13px;">查看 Raw JSON 接口 &rarr;</a>
+            <span class="badge">CI 对标</span>
+        </div>
+        <ul class="nav-list">
+            <li class="nav-group-title">🎯 实战交互控制台</li>
+            <li class="nav-item active" onclick="showSection('playground')">🎮 综合 API Playground</li>
+
+            <li class="nav-group-title">📖 开发手册 (直观代码)</li>
+            <li class="nav-item" onclick="showSection('doc-string')">🔤 字符串工具 (strutil)</li>
+            <li class="nav-item" onclick="showSection('doc-upload')">📁 文件上传 (Upload)</li>
+            <li class="nav-item" onclick="showSection('doc-db')">🗄️ 数据库操作 (ActiveRecord)</li>
+            <li class="nav-item" onclick="showSection('doc-router')">⚡ 路由与中间件 (Router)</li>
+            <li class="nav-item" onclick="showSection('doc-di')">💉 依赖注入 (Inject)</li>
+            <li class="nav-item" onclick="showSection('doc-session')">🔐 服务端会话 (Session)</li>
+            <li class="nav-item" onclick="showSection('doc-build')">📦 Windows 单文件打包</li>
+        </ul>
+    </aside>
+
+    <!-- 右侧主体内容区 -->
+    <main>
+        <header>
+            <div class="header-title" id="pageTitle">🎮 综合 API Playground (实时交互测试)</div>
+            <div class="header-links">
+                <a href="/api/v1/articles" target="_blank">查看 API JSON 数据 &rarr;</a>
             </div>
         </header>
 
-        <!-- 发布新文章表单 -->
-        <div class="card">
-            <h2>✍️ 发布新文章 (POST /api/v1/articles)</h2>
-            <form id="createForm">
-                <div class="form-group">
-                    <label>文章标题</label>
-                    <input type="text" id="title" required placeholder="请输入文章标题...">
+        <div class="content-body">
+            <!-- 1. 综合 API Playground 视图 -->
+            <div id="playground" class="section-view active">
+                <div class="ci-compare">
+                    💡 <strong>PHP CodeIgniter 开发者直觉</strong>：此交互控制台完整演示了参数验证（`binding`）、异步文件上传（`upload`）、分页检索（`Paginate`）、模糊搜索（`Like`）与脱敏（`str.MaskPhone`）。
                 </div>
-                <div class="form-group">
-                    <label>作者</label>
-                    <input type="text" id="author" value="Ben" required placeholder="作者名称">
-                </div>
-                <div class="form-group">
-                    <label>文章正文内容</label>
-                    <textarea id="content" rows="3" required placeholder="请输入详细内容..."></textarea>
-                </div>
-                <button type="submit">异步提交 (AJAX/Fetch)</button>
-                <span id="notice" class="notice"></span>
-            </form>
-        </div>
 
-        <!-- 文章列表展示 -->
-        <div class="card">
-            <h2>📚 文章列表 (GET /api/v1/articles)</h2>
-            <div id="articlesList">加载中...</div>
+                <div class="card">
+                    <div class="card-title">✍️ 发布新文章 (支持封面图片上传与参数校验)</div>
+                    <form id="createArticleForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>文章标题 (binding 校验: min=2, max=50)</label>
+                                <input type="text" id="artTitle" required placeholder="如：Go 零依赖框架设计">
+                            </div>
+                            <div class="form-group">
+                                <label>作者联系方式 (手机号或邮箱，后端自动脱敏)</label>
+                                <input type="text" id="artAuthor" value="13800138000" required placeholder="如：13800138000">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>封面图片 (点击选择本地图片立即上传)</label>
+                            <input type="file" id="artCoverFile" accept="image/*">
+                            <input type="hidden" id="artCoverUrl">
+                            <div id="artPreviewBox" style="margin-top: 8px; display: none;">
+                                <img id="artPreviewImg" src="" style="width: 100px; height: 65px; border-radius: 4px; object-fit: cover;">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>文章正文 (binding 校验: min=5)</label>
+                            <textarea id="artContent" rows="2" required placeholder="输入详细正文内容..."></textarea>
+                        </div>
+                        <button type="submit" class="btn">🚀 提交发布文章</button>
+                        <span id="postMsg" style="font-size: 13px; margin-left: 12px;"></span>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <span>📚 文章数据列表 (带模糊搜索与分页)</span>
+                    </div>
+                    <div style="margin-bottom: 14px;">
+                        <input type="text" id="artSearch" placeholder="🔍 输入标题或正文关键字模糊搜索 (Like 查询)..." oninput="onSearchInput()">
+                    </div>
+                    <div id="articlesContainer">加载中...</div>
+                    <div class="pagination" id="pagerBox"></div>
+                </div>
+            </div>
+
+            <!-- 2. 字符串工具手册 -->
+            <div id="doc-string" class="section-view">
+                <div class="ci-compare">
+                    💡 <strong>对标 CodeIgniter</strong>：<code>string_helper</code>, <code>text_helper</code>, <code>security_helper</code>。
+                </div>
+                <div class="card">
+                    <div class="card-title">🔤 字符串处理完整可运行代码示例</div>
+                    <p class="desc">引入 <code>"godeniter/utils/str"</code> 即可直接调用，100% 纯 Go 标准库实现。</p>
+                    <div class="code-container">
+                        <button class="btn-copy" onclick="copyCode(this)">复制代码</button>
+                        <pre>package main
+
+import (
+    "fmt"
+    "godeniter/utils/str"
+)
+
+func main() {
+    // 1. 随机字符与唯一标识生成 (验证码 / Token / UUID)
+    code := str.RandomNumeric(6)    // "839201" (6位纯数字验证码)
+    token := str.Random(32)         // 32位高安全性随机Token
+    uuid := str.UUID()              // "f47ac10b-58cc-4372-a567-0e02b2c3d479" (RFC4122 v4 UUID)
+
+    // 2. 命名规范互转 (驼峰 / 蛇形 / 短横线)
+    snake := str.SnakeCase("UserProfile")        // "user_profile"
+    camel := str.CamelCase("user_profile", true) // "UserProfile" (大驼峰)
+    smallCamel := str.CamelCase("user_profile", false) // "userProfile" (小驼峰)
+    kebab := str.KebabCase("UserProfile")        // "user-profile"
+
+    // 3. 智能文本截断与摘要提取 (支持 UTF-8 中文按字截取)
+    summary := str.Truncate("Godeniter 是一款轻量级的现代化 Web 框架...", 10, "...")
+    sub := str.Substr("你好Godeniter世界", 2, 9) // "Godeniter"
+
+    // 4. 敏感隐私数据脱敏
+    phone := str.MaskPhone("13812345678")          // "138****5678"
+    email := str.MaskEmail("ben@godeniter.dev")    // "b***n@godeniter.dev"
+    idCard := str.MaskIDCard("110101199003072345") // "1101**********2345"
+
+    // 5. 哈希加密与 XSS 安全实体过滤
+    md5Str := str.MD5("123456")                    // 32位 MD5
+    safeHTML := str.XSSFilter("&lt;script&gt;alert(1)&lt;/script&gt;")
+
+    fmt.Println(code, uuid, snake, phone, safeHTML)
+}</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. 文件上传手册 -->
+            <div id="doc-upload" class="section-view">
+                <div class="ci-compare">
+                    💡 <strong>对标 CodeIgniter</strong>：<code>$this->load->library('upload', $config);</code>
+                </div>
+                <div class="card">
+                    <div class="card-title">📁 文件上传完整服务端处理代码</div>
+                    <p class="desc">支持在 Controller/Handler 中使用 <code>c.FormFile("avatar")</code> 获取，配合 <code>upload.Options</code> 校验大小、扩展名白名单并自动安全命名。</p>
+                    <div class="code-container">
+                        <button class="btn-copy" onclick="copyCode(this)">复制代码</button>
+                        <pre>package main
+
+import (
+    "godeniter"
+    "godeniter/utils/upload"
+)
+
+func main() {
+    app := godeniter.Classic()
+    app.Static("/uploads", "./uploads") // 挂载静态目录
+
+    app.Post("/api/upload", func(c *godeniter.Context) {
+        // 1. 获取上传文件对象
+        file, err := c.FormFile("avatar")
+        if err != nil {
+            c.Fail(40001, "请选择文件: "+err.Error())
+            return
+        }
+
+        // 2. 配置安全规则 (大小限制、白名单、自动重命名)
+        opts := upload.Options{
+            SaveDir:     "./uploads/avatars",
+            MaxBytes:    2 * 1024 * 1024, // 2MB
+            AllowedExts: []string{".jpg", ".png", ".jpeg"},
+            AutoRename:  true, // 自动生成 20260903_160000_random.jpg
+        }
+
+        // 3. 执行校验与保存
+        savedPath, err := c.SaveUploadedFileWithOptions(file, opts)
+        if err != nil {
+            c.Fail(40002, "上传失败: "+err.Error())
+            return
+        }
+
+        // 4. 返回 URL
+        c.Success(godeniter.H{
+            "filename": file.Filename,
+            "url":      "/" + savedPath,
+        })
+    })
+
+    app.Run(":8080")
+}</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. 数据库操作手册 -->
+            <div id="doc-db" class="section-view">
+                <div class="ci-compare">
+                    💡 <strong>对标 CodeIgniter</strong>：<code>$this->db->select()->where()->like()->join()->get();</code>
+                </div>
+                <div class="card">
+                    <div class="card-title">🗄️ 数据库 ActiveRecord 链式操作与一键分页代码</div>
+                    <div class="code-container">
+                        <button class="btn-copy" onclick="copyCode(this)">复制代码</button>
+                        <pre>package main
+
+import (
+    "godeniter/db"
+    _ "github.com/go-sql-driver/mysql" // 或 _ "modernc.org/sqlite"
+)
+
+type User struct {
+    ID       int    `db:"id"`
+    Username string `db:"username"`
+    Email    string `db:"email"`
+}
+
+func main() {
+    // 1. 链式查询 (Like 模糊搜索, Join 联表, Between 范围)
+    var users []User
+    _ = db.Table("users").
+        Select("users.id", "users.username", "profiles.avatar").
+        LeftJoin("profiles", "users.id = profiles.user_id").
+        Where("users.status = ?", 1).
+        Like("users.username", "%admin%").
+        WhereBetween("users.age", 18, 60).
+        OrderBy("users.id DESC").
+        Find(&users)
+
+    // 2. 一键分页查询 (Paginate)
+    var list []User
+    pager, _ := db.Table("users").
+        Where("status = ?", 1).
+        OrderBy("id DESC").
+        Paginate(1, 10, &list)
+    // pager.Total, pager.TotalPages, pager.HasNext, pager.HasPrev
+
+    // 3. 快捷自增与聚合函数
+    db.Table("articles").Where("id = ?", 1).Increment("views", 1)
+    sumAmount, _ := db.Table("orders").Sum("amount")
+    count, _ := db.Table("users").Count()
+
+    // 4. 事务处理
+    _ = db.Transaction(func(tx *db.Tx) error {
+        _, err := tx.Table("wallets").Where("id = ?", 1).Decrement("balance", 100)
+        return err
+    })
+}</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. 路由手册 -->
+            <div id="doc-router" class="section-view">
+                <div class="ci-compare">
+                    💡 <strong>对标 CodeIgniter</strong>：<code>$routes->group('api', function($routes){ ... });</code>
+                </div>
+                <div class="card">
+                    <div class="card-title">⚡ 路由与中间件完整示例</div>
+                    <div class="code-container">
+                        <button class="btn-copy" onclick="copyCode(this)">复制代码</button>
+                        <pre>package main
+
+import (
+    "godeniter"
+    "godeniter/router"
+)
+
+func main() {
+    app := godeniter.New()
+    app.Use(godeniter.Logger(), godeniter.Recovery())
+
+    // 1. 动态命名参数
+    app.Get("/users/:id", func(params router.Params) (int, godeniter.H) {
+        return 200, godeniter.H{"user_id": params.Get("id")}
+    })
+
+    // 2. 路由分组与中间件继承
+    v1 := app.Group("/api/v1")
+    {
+        v1.Get("/articles", listArticles)
+        v1.Post("/articles", createArticle)
+    }
+
+    app.Run(":8080")
+}</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. 依赖注入手册 -->
+            <div id="doc-di" class="section-view">
+                <div class="ci-compare">
+                    💡 <strong>Martini 哲学</strong>：按需声明参数，容器在运行时反射自动装配！
+                </div>
+                <div class="card">
+                    <div class="card-title">💉 依赖注入 (DI) 代码示例</div>
+                    <div class="code-container">
+                        <button class="btn-copy" onclick="copyCode(this)">复制代码</button>
+                        <pre>type Config struct { AppName string }
+type Database struct { DSN string }
+
+func main() {
+    app := godeniter.New()
+
+    // 注册全局依赖
+    app.Map(&Config{AppName: "My App"})
+    app.Map(&Database{DSN: "localhost:3306"})
+
+    // Handler 任意声明参数，框架自动注入！
+    app.Get("/info", func(cfg *Config, db *Database) (int, string) {
+        return 200, cfg.AppName + " connected to " + db.DSN
+    })
+
+    app.Run(":8080")
+}</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 7. Session 手册 -->
+            <div id="doc-session" class="section-view">
+                <div class="ci-compare">
+                    💡 <strong>对标 CodeIgniter</strong>：<code>$this->session->set_userdata('user', 'admin');</code>
+                </div>
+                <div class="card">
+                    <div class="card-title">🔐 服务端 Session (HMAC 签名安全 Cookie)</div>
+                    <div class="code-container">
+                        <button class="btn-copy" onclick="copyCode(this)">复制代码</button>
+                        <pre>package main
+
+import (
+    "godeniter"
+    "godeniter/session"
+)
+
+func main() {
+    app := godeniter.Classic()
+
+    // 挂载防篡改 Session 中间件
+    store := session.NewCookieStore("my-secret-key-123456")
+    app.Use(godeniter.Session(store, "app_session"))
+
+    app.Post("/login", func(c *godeniter.Context, sess session.Session) {
+        sess.Set("user_id", 1001)
+        c.Redirect(302, "/dashboard")
+    })
+
+    app.Get("/dashboard", func(c *godeniter.Context, sess session.Session) {
+        userID := sess.GetInt("user_id")
+        c.String(200, "User ID: %d", userID)
+    })
+
+    app.Run(":8080")
+}</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 8. 单文件打包手册 -->
+            <div id="doc-build" class="section-view">
+                <div class="ci-compare">
+                    💡 <strong>客户机极简交付</strong>：将前端 HTML、CSS 与 Go 二进制打包为单个 <code>.exe</code>，免安装任何环境，双击即可运行！
+                </div>
+                <div class="card">
+                    <div class="card-title">📦 一键打包 Windows 单文件可执行程序</div>
+                    <div class="code-container">
+                        <button class="btn-copy" onclick="copyCode(this)">复制代码</button>
+                        <pre># 1. 在 macOS / Linux 下跨平台交叉编译为 Windows .exe
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o dist/my_app.exe ./examples/01_api_spa/main.go
+
+# 2. 或直接运行官方构建脚本
+./build.sh      # macOS / Linux
+build.bat       # Windows
+
+# 产物在 dist/ 目录中：
+# dist/demo1_api_spa.exe (双击直接启动服务并在终端打印访问链接)</pre>
+                    </div>
+                </div>
+            </div>
+
         </div>
-    </div>
+    </main>
 
     <script>
-        // 异步获取并渲染文章列表
-        async function fetchArticles() {
+        // 切换左侧导航视图
+        function showSection(id) {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active'));
+
+            event.currentTarget.classList.add('active');
+            const target = document.getElementById(id);
+            if (target) {
+                target.classList.add('active');
+            }
+
+            const titleMap = {
+                'playground': '🎮 综合 API Playground (实时交互测试)',
+                'doc-string': '🔤 字符串与安全辅助函数库 (utils/str)',
+                'doc-upload': '📁 文件上传与安全存储 (utils/upload)',
+                'doc-db': '🗄️ 数据库操作与 ActiveRecord 链式查询 (db)',
+                'doc-router': '⚡ 动态路由与中间件系统 (router)',
+                'doc-di': '💉 依赖注入与 Martini 风格容器 (inject)',
+                'doc-session': '🔐 服务端会话管理 (session)',
+                'doc-build': '📦 Windows 单文件极速交付打包'
+            };
+            document.getElementById('pageTitle').innerText = titleMap[id] || '开发者手册';
+        }
+
+        // 复制代码功能
+        function copyCode(btn) {
+            const pre = btn.nextElementSibling;
+            navigator.clipboard.writeText(pre.innerText).then(() => {
+                btn.innerText = '✅ 已复制!';
+                setTimeout(() => { btn.innerText = '复制代码'; }, 1500);
+            });
+        }
+
+        // ==========================================
+        // Playground 逻辑
+        // ==========================================
+        let curPage = 1;
+        const pSize = 4;
+        let sTimer = null;
+
+        async function loadArticles(p = 1) {
+            curPage = p;
+            const kw = document.getElementById('artSearch').value;
             try {
-                const res = await fetch('/api/v1/articles');
+                const res = await fetch(`/api/v1/articles?page=${p}&page_size=${pSize}&keyword=${encodeURIComponent(kw)}`);
                 const data = await res.json();
-                if (data.code === 0 && data.data && data.data.items) {
-                    renderArticles(data.data.items);
-                } else {
-                    document.getElementById('articlesList').innerHTML = '<p style="color:#ef4444">加载失败: ' + (data.message || '未知错误') + '</p>';
+                if (data.code === 0 && data.data) {
+                    renderArticleList(data.data.items || []);
+                    renderPager(data.data.pagination);
                 }
             } catch (err) {
-                document.getElementById('articlesList').innerHTML = '<p style="color:#ef4444">网络请求错误: ' + err + '</p>';
+                document.getElementById('articlesContainer').innerHTML = '<p style="color:#ef4444">请求异常: ' + err + '</p>';
             }
         }
 
-        function renderArticles(items) {
-            const list = document.getElementById('articlesList');
+        function renderArticleList(items) {
+            const box = document.getElementById('articlesContainer');
             if (items.length === 0) {
-                list.innerHTML = '<p style="color: #94a3b8; font-size: 14px;">暂无文章，请在上方添加。</p>';
+                box.innerHTML = '<p style="color: #94a3b8; padding: 20px; text-align: center;">暂无匹配记录。</p>';
                 return;
             }
-            list.innerHTML = items.map(item => `
-                <div class="article-item" id="art-${item.id}">
-                    <div style="flex: 1; margin-right: 16px;">
-                        <div class="article-title">#${item.id} ${escapeHtml(item.title)}</div>
-                        <div class="article-meta">作者: ${escapeHtml(item.author)} | 发布时间: ${new Date(item.created_at).toLocaleString()}</div>
-                        <div class="article-content">${escapeHtml(item.content)}</div>
+            box.innerHTML = items.map(a => `
+                <div class="article-card">
+                    ${a.cover_url ? `<img class="article-img" src="${a.cover_url}" alt="封面">` : ''}
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; font-size: 15px; color: #fff; margin-bottom: 4px;">#${a.id} ${escapeHtml(a.title)}</div>
+                        <div style="font-size: 12px; color: #94a3b8; margin-bottom: 6px;">作者 (已脱敏): <strong style="color: #38bdf8;">${escapeHtml(a.author_mask || a.author)}</strong> | 阅读量: ${a.views}</div>
+                        <div style="font-size: 13px; color: #cbd5e1; line-height: 1.5;">${escapeHtml(a.content)}</div>
                     </div>
                     <div>
-                        <button class="btn-del" onclick="deleteArticle(${item.id})">删除</button>
+                        <button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="delArticle(${a.id})">删除</button>
                     </div>
                 </div>
             `).join('');
         }
 
-        // 创建文章
-        document.getElementById('createForm').addEventListener('submit', async (e) => {
+        function renderPager(p) {
+            const bar = document.getElementById('pagerBox');
+            if (!p || p.total_pages <= 1) {
+                bar.innerHTML = '';
+                return;
+            }
+            bar.innerHTML = `
+                <button class="page-btn" ${!p.has_prev ? 'disabled' : ''} onclick="loadArticles(${p.page - 1})">&larr; 上一页</button>
+                <span style="font-size: 12px; color: #94a3b8;">第 ${p.page} / ${p.total_pages} 页 (共 ${p.total} 条)</span>
+                <button class="page-btn" ${!p.has_next ? 'disabled' : ''} onclick="loadArticles(${p.page + 1})">下一页 &rarr;</button>
+            `;
+        }
+
+        function onSearchInput() {
+            clearTimeout(sTimer);
+            sTimer = setTimeout(() => { loadArticles(1); }, 300);
+        }
+
+        // 文件上传监听
+        document.getElementById('artCoverFile').addEventListener('change', async (e) => {
+            const f = e.target.files[0];
+            if (!f) return;
+            const fd = new FormData();
+            fd.append('file', f);
+            try {
+                const res = await fetch('/api/v1/upload', { method: 'POST', body: fd });
+                const d = await res.json();
+                if (d.code === 0) {
+                    document.getElementById('artCoverUrl').value = d.data.url;
+                    document.getElementById('artPreviewImg').src = d.data.url;
+                    document.getElementById('artPreviewBox').style.display = 'block';
+                } else {
+                    alert('上传失败: ' + d.message);
+                }
+            } catch (err) {
+                alert('上传异常: ' + err);
+            }
+        });
+
+        // 提交创建文章
+        document.getElementById('createArticleForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const title = document.getElementById('title').value;
-            const author = document.getElementById('author').value;
-            const content = document.getElementById('content').value;
-            const notice = document.getElementById('notice');
+            const title = document.getElementById('artTitle').value;
+            const author = document.getElementById('artAuthor').value;
+            const content = document.getElementById('artContent').value;
+            const cover_url = document.getElementById('artCoverUrl').value;
+            const msg = document.getElementById('postMsg');
 
             try {
                 const res = await fetch('/api/v1/articles', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ title, author, content })
+                    body: JSON.stringify({ title, author, content, cover_url })
                 });
-                const data = await res.json();
-                if (data.code === 0) {
-                    notice.style.color = '#10b981';
-                    notice.innerText = '发布成功！';
-                    document.getElementById('title').value = '';
-                    document.getElementById('content').value = '';
-                    fetchArticles();
+                const d = await res.json();
+                if (d.code === 0) {
+                    msg.style.color = '#10b981';
+                    msg.innerText = '✅ 发布成功！';
+                    document.getElementById('artTitle').value = '';
+                    document.getElementById('artContent').value = '';
+                    document.getElementById('artCoverUrl').value = '';
+                    document.getElementById('artPreviewBox').style.display = 'none';
+                    loadArticles(1);
                 } else {
-                    notice.style.color = '#ef4444';
-                    notice.innerText = '错误: ' + data.message;
+                    msg.style.color = '#ef4444';
+                    msg.innerText = '❌ 校验失败: ' + d.message;
                 }
             } catch (err) {
-                notice.style.color = '#ef4444';
-                notice.innerText = '请求失败: ' + err;
+                msg.style.color = '#ef4444';
+                msg.innerText = '❌ 请求异常: ' + err;
             }
         });
 
-        // 删除文章
-        async function deleteArticle(id) {
-            if (!confirm('确定要删除 ID 为 ' + id + ' 的文章吗？')) return;
+        async function delArticle(id) {
+            if (!confirm('确定删除文章 #' + id + ' 吗？')) return;
             try {
                 const res = await fetch('/api/v1/articles/' + id, { method: 'DELETE' });
-                const data = await res.json();
-                if (data.code === 0) {
-                    fetchArticles();
+                const d = await res.json();
+                if (d.code === 0) {
+                    loadArticles(curPage);
                 } else {
-                    alert('删除失败: ' + data.message);
+                    alert('删除失败: ' + d.message);
                 }
             } catch (err) {
-                alert('请求失败: ' + err);
+                alert('请求异常: ' + err);
             }
         }
 
-        function escapeHtml(str) {
-            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        function escapeHtml(s) {
+            return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         }
 
-        // 页面初始化时载入数据
-        fetchArticles();
+        // 初始化
+        loadArticles(1);
     </script>
 </body>
 </html>

@@ -48,6 +48,10 @@
   - [x] `godeniter.Session` 全自动装配中间件
   - [x] Context 与 Injector 深度集成 (`c.Session()`, `func(sess session.Session)`)
   - [x] 100% 单元测试覆盖 (`session/session_test.go`)
+- [x] **通用工具集模块 (`utils/`)**
+  - [x] `utils/str/`：字符串随机串、UUID、命名转换、UTF-8 截断、脱敏、哈希与 XSS 过滤
+  - [x] `utils/upload/`：文件上传大小/扩展名白名单校验、安全重命名与自动归档
+  - [x] 100% 单元测试覆盖 (`utils/str/str_test.go`, `utils/upload/upload_test.go`)
 - [x] **官方 CLI 脚手架工具 (`cmd/godeniter/`)**
   - [x] `godeniter new <name> --template=api|mvc` 一键生成全新工程
   - [x] `godeniter version` 与帮助信息输出
@@ -56,10 +60,19 @@
   - [x] 模式一：前后端分离 RESTful API + SPA 完整 Demo (`examples/01_api_spa/`)
   - [x] 模式二：经典 PHP 风格服务端模板渲染 MVC 完整 Demo (`examples/02_mvc_template/`)
   - [x] 跨平台一键编译脚本 (`build.sh`, `build.bat`)，一键生成 Windows `.exe`
-- [x] **项目文档体系**
-  - [x] 详实的根目录 [`README.md`](file:///Users/ben/godeniter/README.md)
-  - [x] 内部机制与架构设计 [`docs/architecture.md`](file:///Users/ben/godeniter/docs/architecture.md)
-  - [x] 当前进度与交接说明 [`docs/progress.md`](file:///Users/ben/godeniter/docs/progress.md)
+- [x] **全套 CodeIgniter 风格开发者文档体系**
+  - [x] 主入口 [`README.md`](file:///Users/ben/godeniter/README.md)
+  - [x] 架构原理 [`docs/architecture.md`](file:///Users/ben/godeniter/docs/architecture.md)
+  - [x] 开发进度与接续指南 [`docs/progress.md`](file:///Users/ben/godeniter/docs/progress.md)
+  - [x] 路由与中间件开发手册 [`docs/routing.md`](file:///Users/ben/godeniter/docs/routing.md)
+  - [x] 数据库与 ActiveRecord 手册 [`docs/database.md`](file:///Users/ben/godeniter/docs/database.md)
+  - [x] 依赖注入与容器手册 [`docs/dependency_injection.md`](file:///Users/ben/godeniter/docs/dependency_injection.md)
+  - [x] 文件上传与安全存储手册 [`docs/upload.md`](file:///Users/ben/godeniter/docs/upload.md)
+  - [x] 字符串与安全辅助库手册 [`docs/string_utils.md`](file:///Users/ben/godeniter/docs/string_utils.md)
+  - [x] 参数绑定与验证器手册 [`docs/binding_validation.md`](file:///Users/ben/godeniter/docs/binding_validation.md)
+  - [x] 服务端会话管理手册 [`docs/session.md`](file:///Users/ben/godeniter/docs/session.md)
+  - [x] 跨平台单文件打包手册 [`docs/build_and_deploy.md`](file:///Users/ben/godeniter/docs/build_and_deploy.md)
+  - [x] 交互式 CodeIgniter 风格在线 HTML 控制台与用户手册 (`examples/01_api_spa/static/index.html`)
 
 ---
 

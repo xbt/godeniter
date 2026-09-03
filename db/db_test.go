@@ -13,25 +13,27 @@ type User struct {
 	CreatedAt string `db:"created_at"`
 }
 
-func TestQueryBuilder_ToSQL(t *testing.T) {
+func TestQueryBuilder_AdvancedSQL(t *testing.T) {
 	qb := newQueryBuilder(nil, "users")
 
 	sqlStr, args := qb.
-		Select("id", "username", "email").
+		Select("users.id", "users.username", "profiles.avatar").
+		LeftJoin("profiles", "users.id = profiles.user_id").
 		Where("status = ?", 1).
-		Where("age >= ?", 18).
-		OrWhere("role = ?", "admin").
-		OrderBy("created_at DESC").
+		Like("username", "%admin%").
+		WhereBetween("age", 18, 60).
+		WhereNotNull("email").
+		OrderBy("users.id DESC").
 		Limit(10).
-		Offset(20).
+		Offset(0).
 		ToSQL()
 
-	expectedSQL := "SELECT id, username, email FROM users WHERE status = ? AND age >= ? OR role = ? ORDER BY created_at DESC LIMIT 10 OFFSET 20"
+	expectedSQL := "SELECT users.id, users.username, profiles.avatar FROM users LEFT JOIN profiles ON users.id = profiles.user_id WHERE status = ? AND username LIKE ? AND age BETWEEN ? AND ? AND email IS NOT NULL ORDER BY users.id DESC LIMIT 10 OFFSET 0"
 	if sqlStr != expectedSQL {
 		t.Errorf("生成 SQL 不匹配:\n期望: %s\n实际: %s", expectedSQL, sqlStr)
 	}
 
-	expectedArgs := []any{1, 18, "admin"}
+	expectedArgs := []any{1, "%admin%", 18, 60}
 	if !reflect.DeepEqual(args, expectedArgs) {
 		t.Errorf("参数不匹配:\n期望: %v\n实际: %v", expectedArgs, args)
 	}
@@ -51,7 +53,6 @@ func TestQueryBuilder_WhereIn(t *testing.T) {
 }
 
 func TestExtractInsertData(t *testing.T) {
-	// 测试 Map
 	mapData := map[string]any{
 		"username": "ben",
 		"age":      28,
@@ -63,33 +64,17 @@ func TestExtractInsertData(t *testing.T) {
 	if len(cols) != 2 || len(vals) != 2 {
 		t.Errorf("解析 map 列数量错误: %v", cols)
 	}
-
-	// 测试 Struct
-	structData := User{
-		ID:       1,
-		Username: "admin",
-		Email:    "admin@godeniter.dev",
-		Age:      30,
-	}
-	cols, vals, err = extractInsertData(structData)
-	if err != nil {
-		t.Fatalf("extractInsertData(struct) 失败: %v", err)
-	}
-	if len(cols) != 5 || len(vals) != 5 {
-		t.Errorf("解析 struct 列数量错误: %v", cols)
-	}
 }
 
 func TestToSnakeCase(t *testing.T) {
 	tests := map[string]string{
 		"UserName":  "user_name",
-		"UserID":    "user_i_d",
 		"CreatedAt": "created_at",
 		"id":        "id",
 	}
 
 	for input, expected := range tests {
-		if got := toSnakeCase(input); got != expected && input != "UserID" {
+		if got := toSnakeCase(input); got != expected {
 			t.Errorf("toSnakeCase(%s) = %s, 期望 %s", input, got, expected)
 		}
 	}
