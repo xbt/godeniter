@@ -16,15 +16,33 @@
 * **高性能 Trie 树动态路由**：支持 RESTful 动词、`:param` 动态命名参数、`*filepath` 全路径通配符、路由多级分组与分组中间件。
 * **洋葱圈中间件栈**：提供标准的 `c.Next()` 与 `c.Abort()` 流水线机制，内置 Logger、Recovery 与 CORS 中间件。
 * **PHP 风格轻量 QueryBuilder**：基于标准库 `database/sql` 封装链式 SQL 构建器，支持 SQLite 与 MySQL，提供直观的 ActiveRecord 体验。
-## 📦 如何在你的新项目中引用 Godeniter
+## 📦 如何在新项目中开启开发 (推荐方式)
 
-Godeniter 本身是一个标准且纯粹的 Go Module，你可以直接在任何新项目中引用它：
+### 方式一：直接使用官方脚手架项目 ([`godeniter-starter`](file:///Users/ben/godeniter-starter)) ⭐ (强烈推荐)
+
+在与 `godeniter` 同级目录下，我们提供了预先搭建好标准目录结构（配置、分层控制器、模型、业务层、中间件、视图与一键打包脚本）的独立模板工程：
 
 ```bash
-# 在新项目目录下执行初始化并引用
+# 进入 starter 工程
+cd ../godeniter-starter
+
+# 极速本地启动
+go run main.go
+# 浏览器访问: http://127.0.0.1:8080 (带管理后台、Session 登录与 API 演示)
+
+# 一键编译为 Windows 独立单文件 .exe
+./build.sh
+```
+
+### 方式二：在全新空项目中手动引入 Godeniter 模块
+
+```bash
+# 1. 在新项目目录下初始化
 go mod init my-app
-# 如果是本地项目或未发布到远程，可以使用 replace 或直接引用
-# 比如本地开发：go mod edit -replace godeniter=/path/to/godeniter
+
+# 2. 引入 godeniter 模块 (本地或远程引用)
+go mod edit -replace godeniter=../godeniter
+go mod tidy
 ```
 
 在代码中直接导入：
@@ -34,32 +52,55 @@ import (
     "godeniter/router"
     "godeniter/middleware"
     "godeniter/db"
+    "godeniter/utils/str"
+    "godeniter/utils/upload"
 )
 ```
 
 ---
 
-## 🎯 官方内置全功能开箱即用 Demo
+## ⚡ 极速体验内置 Demo (一键启动运行)
 
-为了满足不同开发场景的需求，框架在 `examples/` 目录下内置了两种最具代表性的完整项目解决方案，均支持 **单文件嵌入与一键打包为 Windows `.exe`**：
+框架在 `examples/` 目录下内置了两种开箱即用的完整项目模式，克隆仓库后可直接在终端一键运行体验：
 
-### 1. [模式一：前后端分离 (RESTful API + SPA 单页) 方案](file:///Users/ben/godeniter/examples/01_api_spa/)
+```bash
+# 1. 运行模式一：前后端分离 (RESTful API + SPA 单页 + 文件上传 + 分页搜索)
+go run ./examples/01_api_spa/main.go
+# 浏览器直接打开访问: http://127.0.0.1:8080 (内置交互式控制台与 CodeIgniter 开发者手册)
+
+# 2. 运行模式二：经典 PHP 风格服务端渲染 (MVC + HTML Template + Session 登录)
+go run ./examples/02_mvc_template/main.go
+# 浏览器直接打开访问: http://127.0.0.1:8080 (默认账号: admin / 密码: 123456)
+```
+
+---
+
+## 🎯 官方内置全功能开箱即用 Demo 详述
+
+### 1. [模式一：前后端分离 (RESTful API + SPA 单页) 方案](./examples/01_api_spa/)
 * **适用场景**：现代化管理后台、移动端/小程序后端、Vue/React 前后端分离项目。
 * **包含特性**：
   * 统一 API 响应格式封装：`c.Success(data)` / `c.Fail(code, msg)`
   * 跨域支持：内置 `middleware.CORS()`
   * 控制器依赖注入：自动将 `ArticleService` 注入到 Handler 中
-  * 内嵌 SPA 前端单页界面，一键编译为 `.exe`，双击即用。
-* **快速运行**：`go run ./examples/01_api_spa/main.go`
+  * 封面图片异步上传与预览、文章分页检索与标题关键词模糊搜索
+  * 内嵌现代化管理面板与交互式开发者手册，一键编译为 `.exe`，双击即用。
+* **快速运行命令**：
+  ```bash
+  go run ./examples/01_api_spa/main.go
+  ```
 
-### 2. [模式二：经典 PHP 风格服务端渲染 (MVC + HTML Template) 方案](file:///Users/ben/godeniter/examples/02_mvc_template/)
+### 2. [模式二：经典 PHP 风格服务端渲染 (MVC + HTML Template) 方案](./examples/02_mvc_template/)
 * **适用场景**：企业内部进销存 ERP、WMS 客户端、SEO 友好的官网或内容管理系统。
 * **包含特性**：
   * 经典的 MVC 目录分层（`controllers/`, `models/`, `views/`）
   * 原生 `html/template` 服务端模板数据循环与条件分支渲染
   * 传统 HTML 表单 POST 提交验证与页面重定向（`c.Redirect`）
-  * Session / Cookie 登录状态管理（`c.SetCookie` / `c.Cookie`）
-* **快速运行**：`go run ./examples/02_mvc_template/main.go`
+  * Session / Cookie 登录状态管理（`c.SetCookie` / `c.Cookie`）与头像上传
+* **快速运行命令**：
+  ```bash
+  go run ./examples/02_mvc_template/main.go
+  ```
 
 ---
 
@@ -378,21 +419,21 @@ godeniter new my-web-project --template=mvc
 ## 📂 项目模块结构
 
 * **根目录核心模块**（极简纯粹，仅保留启动与核心上下文）：
-  * [`godeniter.go`](file:///Users/ben/godeniter/godeniter.go) - 核心引擎入口、模板加载与服务启动
-  * [`context.go`](file:///Users/ben/godeniter/context.go) - 请求上下文、洋葱圈流转与多格式渲染（JSON/HTML/Data）
-  * [`response_writer.go`](file:///Users/ben/godeniter/response_writer.go) - 状态码与响应体双重拦截包装器
+  * [`godeniter.go`](./godeniter.go) - 核心引擎入口、模板加载与服务启动
+  * [`context.go`](./context.go) - 请求上下文、洋葱圈流转与多格式渲染（JSON/HTML/Data）
+  * [`response_writer.go`](./response_writer.go) - 状态码与响应体双重拦截包装器
 * **专业功能子模块**：
-  * [`inject/`](file:///Users/ben/godeniter/inject/) - 依赖注入容器核心（`Map`, `MapTo`, `Invoke`, `Apply`）
-  * [`router/`](file:///Users/ben/godeniter/router/) - 前缀树（Trie）路由器、路由分组与参数解析
-  * [`db/`](file:///Users/ben/godeniter/db/) - 数据库连接管理与增强型 ActiveRecord QueryBuilder (Like, Join, Paginate)
-  * [`session/`](file:///Users/ben/godeniter/session/) - 服务端会话管理与安全签名 CookieStore
-  * [`binding/`](file:///Users/ben/godeniter/binding/) - 请求参数绑定与基于 Struct Tag 的轻量验证器
-  * [`middleware/`](file:///Users/ben/godeniter/middleware/) - 内置中间件（Logger、Recovery、CORS）
+  * [`inject/`](./inject/) - 依赖注入容器核心（`Map`, `MapTo`, `Invoke`, `Apply`）
+  * [`router/`](./router/) - 前缀树（Trie）路由器、路由分组与参数解析
+  * [`db/`](./db/) - 数据库连接管理与增强型 ActiveRecord QueryBuilder (Like, Join, Paginate)
+  * [`session/`](./session/) - 服务端会话管理与安全签名 CookieStore
+  * [`binding/`](./binding/) - 请求参数绑定与基于 Struct Tag 的轻量验证器
+  * [`middleware/`](./middleware/) - 内置中间件（Logger、Recovery、CORS）
 * **通用工具集 (`utils/`)**：
-  * [`utils/str/`](file:///Users/ben/godeniter/utils/str/) - 字符串处理、脱敏、哈希与随机生成
-  * [`utils/upload/`](file:///Users/ben/godeniter/utils/upload/) - 文件上传安全处理类与存储校验器
+  * [`utils/str/`](./utils/str/) - 字符串处理、脱敏、哈希与随机生成
+  * [`utils/upload/`](./utils/upload/) - 文件上传安全处理类与存储校验器
 * **命令行与开箱即用示例**：
-  * [`cmd/godeniter/`](file:///Users/ben/godeniter/cmd/godeniter/) - 官方 CLI 脚手架工具 (`godeniter new`)
-  * [`examples/01_api_spa/`](file:///Users/ben/godeniter/examples/01_api_spa/) - 模式一：前后端分离 RESTful API + SPA 单页 (带文件上传与分页) 完整 Demo
-  * [`examples/02_mvc_template/`](file:///Users/ben/godeniter/examples/02_mvc_template/) - 模式二：经典 PHP 风格服务端渲染 MVC + HTML Template (带头像上传与搜索) 完整 Demo
-  * [`dist/`](file:///Users/ben/godeniter/dist/) - 编译生成的跨平台单文件可执行程序输出目录
+  * [`cmd/godeniter/`](./cmd/godeniter/) - 官方 CLI 脚手架工具 (`godeniter new`)
+  * [`examples/01_api_spa/`](./examples/01_api_spa/) - 模式一：前后端分离 RESTful API + SPA 单页 (带文件上传与分页) 完整 Demo
+  * [`examples/02_mvc_template/`](./examples/02_mvc_template/) - 模式二：经典 PHP 风格服务端渲染 MVC + HTML Template (带头像上传与搜索) 完整 Demo
+  * [`dist/`](./dist/) - 编译生成的跨平台单文件可执行程序输出目录
