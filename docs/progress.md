@@ -39,8 +39,9 @@
   - [x] 100% 单元测试覆盖 (`db/db_test.go`)
 - [x] **单文件打包与 Windows 交付支持**
   - [x] `embed.FS` 内嵌 HTML 模板与静态资源
-  - [x] 完整可独立运行示例 (`cmd/server/main.go`, `cmd/server/views/index.html`)
-  - [x] 跨平台编译脚本 (`build.sh`, `build.bat`)，一键生成 Windows `.exe`
+  - [x] 模式一：前后端分离 RESTful API + SPA 完整 Demo (`examples/01_api_spa/`)
+  - [x] 模式二：经典 PHP 风格服务端模板渲染 MVC 完整 Demo (`examples/02_mvc_template/`)
+  - [x] 跨平台一键编译脚本 (`build.sh`, `build.bat`)，一键生成 Windows `.exe`
 - [x] **项目文档体系**
   - [x] 详实的根目录 [`README.md`](file:///Users/ben/godeniter/README.md)
   - [x] 内部机制与架构设计 [`docs/architecture.md`](file:///Users/ben/godeniter/docs/architecture.md)
@@ -69,11 +70,15 @@
   ```bash
   go test ./... -v
   ```
-* **本地运行示例应用**：
+* **本地运行 Demo 1 (前后端分离 API + SPA 模式)**：
   ```bash
-  go run ./cmd/server/main.go
+  go run ./examples/01_api_spa/main.go
   ```
-* **一键打包全平台单文件可执行程序**：
+* **本地运行 Demo 2 (经典 MVC 模板渲染模式)**：
+  ```bash
+  go run ./examples/02_mvc_template/main.go
+  ```
+* **一键打包全平台单文件可执行程序 (生成 dist/*.exe)**：
   ```bash
   ./build.sh
   ```

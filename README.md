@@ -16,11 +16,54 @@
 * **高性能 Trie 树动态路由**：支持 RESTful 动词、`:param` 动态命名参数、`*filepath` 全路径通配符、路由多级分组与分组中间件。
 * **洋葱圈中间件栈**：提供标准的 `c.Next()` 与 `c.Abort()` 流水线机制，内置 Logger、Recovery 与 CORS 中间件。
 * **PHP 风格轻量 QueryBuilder**：基于标准库 `database/sql` 封装链式 SQL 构建器，支持 SQLite 与 MySQL，提供直观的 ActiveRecord 体验。
-* **单二进制打包与 Windows 客户机交付**：通过 `go:embed` 将前端模板与静态资源内嵌，编译生成的单文件 `.exe` 在 Windows 客户机上双击即可直接运行，并在控制台实时输出访问地址。
+## 📦 如何在你的新项目中引用 Godeniter
+
+Godeniter 本身是一个标准且纯粹的 Go Module，你可以直接在任何新项目中引用它：
+
+```bash
+# 在新项目目录下执行初始化并引用
+go mod init my-app
+# 如果是本地项目或未发布到远程，可以使用 replace 或直接引用
+# 比如本地开发：go mod edit -replace godeniter=/path/to/godeniter
+```
+
+在代码中直接导入：
+```go
+import (
+    "godeniter"
+    "godeniter/router"
+    "godeniter/middleware"
+    "godeniter/db"
+)
+```
 
 ---
 
-## 🚀 快速上手 (Quick Start)
+## 🎯 官方内置全功能开箱即用 Demo
+
+为了满足不同开发场景的需求，框架在 `examples/` 目录下内置了两种最具代表性的完整项目解决方案，均支持 **单文件嵌入与一键打包为 Windows `.exe`**：
+
+### 1. [模式一：前后端分离 (RESTful API + SPA 单页) 方案](file:///Users/ben/godeniter/examples/01_api_spa/)
+* **适用场景**：现代化管理后台、移动端/小程序后端、Vue/React 前后端分离项目。
+* **包含特性**：
+  * 统一 API 响应格式封装：`c.Success(data)` / `c.Fail(code, msg)`
+  * 跨域支持：内置 `middleware.CORS()`
+  * 控制器依赖注入：自动将 `ArticleService` 注入到 Handler 中
+  * 内嵌 SPA 前端单页界面，一键编译为 `.exe`，双击即用。
+* **快速运行**：`go run ./examples/01_api_spa/main.go`
+
+### 2. [模式二：经典 PHP 风格服务端渲染 (MVC + HTML Template) 方案](file:///Users/ben/godeniter/examples/02_mvc_template/)
+* **适用场景**：企业内部进销存 ERP、WMS 客户端、SEO 友好的官网或内容管理系统。
+* **包含特性**：
+  * 经典的 MVC 目录分层（`controllers/`, `models/`, `views/`）
+  * 原生 `html/template` 服务端模板数据循环与条件分支渲染
+  * 传统 HTML 表单 POST 提交验证与页面重定向（`c.Redirect`）
+  * Session / Cookie 登录状态管理（`c.SetCookie` / `c.Cookie`）
+* **快速运行**：`go run ./examples/02_mvc_template/main.go`
+
+---
+
+## 🚀 基础快速上手 (Quick Start)
 
 ### 1. 基础示例
 
@@ -171,15 +214,19 @@ func main() {
 
 * **macOS / Linux 环境下生成 Windows `.exe`**：
   ```bash
-  CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o godeniter-app.exe ./cmd/server
+  # 编译 Demo 1 (API + SPA 模式)
+  CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o dist/demo1_api_spa.exe ./examples/01_api_spa/main.go
+
+  # 编译 Demo 2 (MVC 模板渲染模式)
+  CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o dist/demo2_mvc_template.exe ./examples/02_mvc_template/main.go
   ```
-* **运行构建脚本**：
+* **运行一键构建脚本**：
   ```bash
-  ./build.sh      # macOS / Linux
-  build.bat       # Windows
+  ./build.sh      # macOS / Linux (一键编译所有示例并生成 dist/*.exe)
+  build.bat       # Windows (一键编译所有示例)
   ```
 
-构建生成的 `godeniter-app.exe` 无需安装任何环境，直接拷贝给客户，**双击即可运行**并在终端提示访问地址（如 `http://127.0.0.1:8080`）。
+构建生成的 `.exe` 文件无需安装任何环境，直接拷贝给客户，**双击即可运行**并在终端提示访问地址（如 `http://127.0.0.1:8080`）。
 
 ---
 
@@ -187,8 +234,10 @@ func main() {
 
 * [`inject/`](file:///Users/ben/godeniter/inject/) - 依赖注入容器核心（`Map`, `MapTo`, `Invoke`, `Apply`）
 * [`router/`](file:///Users/ben/godeniter/router/) - 前缀树（Trie）路由器、路由分组与参数解析
-* [`context.go`](file:///Users/ben/godeniter/context.go) - 请求上下文、洋葱圈流转与多格式渲染
+* [`context.go`](file:///Users/ben/godeniter/context.go) - 请求上下文、洋葱圈流转与多格式渲染（JSON/HTML/Data）
 * [`godeniter.go`](file:///Users/ben/godeniter/godeniter.go) - 核心引擎入口、模板加载与服务启动
 * [`middleware/`](file:///Users/ben/godeniter/middleware/) - 内置中间件（Logger、Recovery、CORS）
 * [`db/`](file:///Users/ben/godeniter/db/) - 数据库连接管理与链式 QueryBuilder
-* [`cmd/server/`](file:///Users/ben/godeniter/cmd/server/) - 完整可独立打包交付的演示应用
+* [`examples/01_api_spa/`](file:///Users/ben/godeniter/examples/01_api_spa/) - 模式一：前后端分离 RESTful API + SPA 单页完整 Demo
+* [`examples/02_mvc_template/`](file:///Users/ben/godeniter/examples/02_mvc_template/) - 模式二：经典 PHP 风格服务端渲染 MVC + HTML Template 完整 Demo
+* [`dist/`](file:///Users/ben/godeniter/dist/) - 编译生成的跨平台单文件可执行程序输出目录

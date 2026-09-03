@@ -25,15 +25,15 @@ type HandlerFunc func(c *Context)
 type Context struct {
 	inject.Injector // 请求级依赖注入容器
 
-	Req      *http.Request     // 原生 HTTP 请求对象
-	Res      ResponseWriter    // 包装后的 HTTP 响应对象
-	Path     string            // 请求的原始 URL Path
-	Method   string            // 请求方法 (GET/POST/...)
-	Params   router.Params     // 从路由中提取的动态参数 (如 :id, *filepath)
-	handlers []interface{}     // 中间件与 Handler 链
-	index    int               // 当前执行的中间件索引
-	engine   *Engine           // 所属 Engine 指针，用于访问模板等全局资源
-	Keys     map[string]any    // 上下文元数据暂存字典
+	Req      *http.Request  // 原生 HTTP 请求对象
+	Res      ResponseWriter // 包装后的 HTTP 响应对象
+	Path     string         // 请求的原始 URL Path
+	Method   string         // 请求方法 (GET/POST/...)
+	Params   router.Params  // 从路由中提取的动态参数 (如 :id, *filepath)
+	handlers []interface{}  // 中间件与 Handler 链
+	index    int            // 当前执行的中间件索引
+	engine   *Engine        // 所属 Engine 指针，用于访问模板等全局资源
+	Keys     map[string]any // 上下文元数据暂存字典
 }
 
 // newContext 创建并初始化请求上下文实例。
@@ -267,6 +267,63 @@ func (c *Context) Data(code int, contentType string, data []byte) {
 	c.Header("Content-Type", contentType)
 	c.Status(code)
 	c.Res.Write(data)
+}
+
+// APIResponse 定义通用的 REST API 响应结构体。
+type APIResponse struct {
+	Code    int    `json:"code"`           // 业务状态码 (0 表示成功)
+	Message string `json:"message"`        // 提示信息
+	Data    any    `json:"data,omitempty"` // 业务数据载荷
+}
+
+// Success 以统一的 JSON 格式输出成功响应 (code: 0, message: "ok")。
+func (c *Context) Success(data any) {
+	c.JSON(http.StatusOK, APIResponse{
+		Code:    0,
+		Message: "ok",
+		Data:    data,
+	})
+}
+
+// Fail 以统一的 JSON 格式输出业务错误响应。
+func (c *Context) Fail(code int, message string) {
+	c.JSON(http.StatusOK, APIResponse{
+		Code:    code,
+		Message: message,
+		Data:    nil,
+	})
+}
+
+// Redirect 执行 HTTP 重定向跳转 (如 301 永久重定向, 302/303 临时重定向)。
+func (c *Context) Redirect(code int, location string) {
+	c.Status(code)
+	http.Redirect(c.Res, c.Req, location, code)
+}
+
+// SetCookie 向客户端浏览器写入 HTTP Cookie。
+func (c *Context) SetCookie(name, value string, maxAge int, path, domain string, secure, httpOnly bool) {
+	if path == "" {
+		path = "/"
+	}
+	http.SetCookie(c.Res, &http.Cookie{
+		Name:     name,
+		Value:    value,
+		MaxAge:   maxAge,
+		Path:     path,
+		Domain:   domain,
+		Secure:   secure,
+		HttpOnly: httpOnly,
+		SameSite: http.SameSiteLaxMode,
+	})
+}
+
+// Cookie 获取客户端请求携带的指定 Cookie 值。
+func (c *Context) Cookie(name string) (string, error) {
+	cookie, err := c.Req.Cookie(name)
+	if err != nil {
+		return "", err
+	}
+	return cookie.Value, nil
 }
 
 // SetFuncMap 为模板引擎注册自定义函数字典。

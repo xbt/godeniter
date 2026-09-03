@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Godeniter 2.0 - 前后端分离 (API + SPA) 演示</title>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --danger: #ef4444;
+            --success: #10b981;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background: var(--bg); color: var(--text-main); min-height: 100vh; padding: 30px 20px; display: flex; justify-content: center; }
+        .container { max-width: 900px; width: 100%; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+        .logo { font-size: 24px; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
+        .tag { background: #0284c7; font-size: 11px; padding: 2px 8px; border-radius: 99px; color: #fff; }
+        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        .card h2 { font-size: 18px; margin-bottom: 16px; color: #fff; }
+        .form-group { margin-bottom: 14px; }
+        label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; }
+        input[type="text"], textarea { width: 100%; padding: 10px 14px; background: #0f172a; border: 1px solid var(--border); border-radius: 8px; color: #fff; font-size: 14px; }
+        input:focus, textarea:focus { outline: none; border-color: var(--primary); }
+        button { background: var(--primary); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        button:hover { background: var(--primary-hover); }
+        .article-item { background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: flex-start; }
+        .article-title { font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 6px; }
+        .article-meta { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; }
+        .article-content { font-size: 14px; color: #cbd5e1; line-height: 1.6; }
+        .btn-del { background: transparent; color: var(--danger); border: 1px solid var(--danger); padding: 4px 10px; border-radius: 6px; font-size: 12px; }
+        .btn-del:hover { background: var(--danger); color: #fff; }
+        .notice { font-size: 12px; color: #38bdf8; margin-top: 8px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                Godeniter 2.0 <span class="tag">REST API + SPA 模式</span>
+            </div>
+            <div>
+                <a href="/api/v1/articles" target="_blank" style="color: #38bdf8; text-decoration: none; font-size: 13px;">查看 Raw JSON 接口 &rarr;</a>
+            </div>
+        </header>
+
+        <!-- 发布新文章表单 -->
+        <div class="card">
+            <h2>✍️ 发布新文章 (POST /api/v1/articles)</h2>
+            <form id="createForm">
+                <div class="form-group">
+                    <label>文章标题</label>
+                    <input type="text" id="title" required placeholder="请输入文章标题...">
+                </div>
+                <div class="form-group">
+                    <label>作者</label>
+                    <input type="text" id="author" value="Ben" required placeholder="作者名称">
+                </div>
+                <div class="form-group">
+                    <label>文章正文内容</label>
+                    <textarea id="content" rows="3" required placeholder="请输入详细内容..."></textarea>
+                </div>
+                <button type="submit">异步提交 (AJAX/Fetch)</button>
+                <span id="notice" class="notice"></span>
+            </form>
+        </div>
+
+        <!-- 文章列表展示 -->
+        <div class="card">
+            <h2>📚 文章列表 (GET /api/v1/articles)</h2>
+            <div id="articlesList">加载中...</div>
+        </div>
+    </div>
+
+    <script>
+        // 异步获取并渲染文章列表
+        async function fetchArticles() {
+            try {
+                const res = await fetch('/api/v1/articles');
+                const data = await res.json();
+                if (data.code === 0 && data.data && data.data.items) {
+                    renderArticles(data.data.items);
+                } else {
+                    document.getElementById('articlesList').innerHTML = '<p style="color:#ef4444">加载失败: ' + (data.message || '未知错误') + '</p>';
+                }
+            } catch (err) {
+                document.getElementById('articlesList').innerHTML = '<p style="color:#ef4444">网络请求错误: ' + err + '</p>';
+            }
+        }
+
+        function renderArticles(items) {
+            const list = document.getElementById('articlesList');
+            if (items.length === 0) {
+                list.innerHTML = '<p style="color: #94a3b8; font-size: 14px;">暂无文章，请在上方添加。</p>';
+                return;
+            }
+            list.innerHTML = items.map(item => `
+                <div class="article-item" id="art-${item.id}">
+                    <div style="flex: 1; margin-right: 16px;">
+                        <div class="article-title">#${item.id} ${escapeHtml(item.title)}</div>
+                        <div class="article-meta">作者: ${escapeHtml(item.author)} | 发布时间: ${new Date(item.created_at).toLocaleString()}</div>
+                        <div class="article-content">${escapeHtml(item.content)}</div>
+                    </div>
+                    <div>
+                        <button class="btn-del" onclick="deleteArticle(${item.id})">删除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 创建文章
+        document.getElementById('createForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = document.getElementById('title').value;
+            const author = document.getElementById('author').value;
+            const content = document.getElementById('content').value;
+            const notice = document.getElementById('notice');
+
+            try {
+                const res = await fetch('/api/v1/articles', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, author, content })
+                });
+                const data = await res.json();
+                if (data.code === 0) {
+                    notice.style.color = '#10b981';
+                    notice.innerText = '发布成功！';
+                    document.getElementById('title').value = '';
+                    document.getElementById('content').value = '';
+                    fetchArticles();
+                } else {
+                    notice.style.color = '#ef4444';
+                    notice.innerText = '错误: ' + data.message;
+                }
+            } catch (err) {
+                notice.style.color = '#ef4444';
+                notice.innerText = '请求失败: ' + err;
+            }
+        });
+
+        // 删除文章
+        async function deleteArticle(id) {
+            if (!confirm('确定要删除 ID 为 ' + id + ' 的文章吗？')) return;
+            try {
+                const res = await fetch('/api/v1/articles/' + id, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.code === 0) {
+                    fetchArticles();
+                } else {
+                    alert('删除失败: ' + data.message);
+                }
+            } catch (err) {
+                alert('请求失败: ' + err);
+            }
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        // 页面初始化时载入数据
+        fetchArticles();
+    </script>
+</body>
+</html>
