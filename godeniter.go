@@ -15,11 +15,14 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	"path/filepath"
 	"reflect"
+	"regexp"
 	"runtime"
 	"strings"
 	"syscall"
 	"time"
+
 )
 
 // Engine 是 Godeniter 框架的核心实例，负责管理全局依赖注入容器、路由注册与 HTTP 请求分发。
@@ -151,28 +154,86 @@ func (engine *Engine) GetDependency(t reflect.Type) reflect.Value {
 	return engine.Injector.Get(t)
 }
 
+// templateCommentRegex 匹配 <!--{{ ... }}--> 无侵入模板注释语法
+var templateCommentRegex = regexp.MustCompile(`<!--\s*\{\{(.*?)\}\}\s*-->`)
+
+// PreprocessHTMLTemplate 将 HTML 模板中的无侵入注释语法 <!--{{ ... }}--> 自动转换为标准 Go 模板语法 {{ ... }}
+// 同时完整保留普通开发注释 <!-- ... -->，实现纯前端原型静态无侵入预览与服务端渲染的完美融合。
+func PreprocessHTMLTemplate(content string) string {
+	return templateCommentRegex.ReplaceAllString(content, "{{$1}}")
+}
+
+// ParseHTMLFS 从虚拟文件系统 (fs.FS / embed.FS) 解析 HTML 模板，原生支持 <!--{{ ... }}--> 无侵入注释预处理
+func ParseHTMLFS(embedFS fs.FS, funcMap template.FuncMap, patterns ...string) (*template.Template, error) {
+	tmpl := template.New("").Funcs(funcMap)
+	for _, pattern := range patterns {
+		matches, err := fs.Glob(embedFS, pattern)
+		if err != nil {
+			return nil, err
+		}
+		for _, match := range matches {
+			data, err := fs.ReadFile(embedFS, match)
+			if err != nil {
+				return nil, err
+			}
+			preprocessed := PreprocessHTMLTemplate(string(data))
+			name := path.Base(match)
+			var t *template.Template
+			if tmpl.Lookup(name) != nil {
+				t = tmpl.Lookup(name)
+			} else {
+				t = tmpl.New(name)
+			}
+			if _, err := t.Parse(preprocessed); err != nil {
+				return nil, fmt.Errorf("解析模板文件 [%s] 失败: %w", match, err)
+			}
+		}
+	}
+	return tmpl, nil
+}
+
 // SetHTMLTemplate 设置自定义已解析的 HTML 模板对象。
 func (engine *Engine) SetHTMLTemplate(tmpl *template.Template) {
 	engine.htmlTemplates = tmpl
 }
 
-// LoadHTMLGlob 加载匹配 glob 模式的磁盘 HTML 模板文件（例如 "views/*" 或 "views/**/*"）。
+// LoadHTMLGlob 加载匹配 glob 模式的磁盘 HTML 模板文件，自动支持 <!--{{ ... }}--> 无侵入注释预处理。
 func (engine *Engine) LoadHTMLGlob(pattern string) {
-	engine.htmlTemplates = template.Must(template.New("").Funcs(engine.funcMap).ParseGlob(pattern))
-}
-
-// LoadHTMLFS 从嵌入式文件系统 (fs.FS / embed.FS) 加载 HTML 模板，为单文件打包提供开箱即用支持。
-func (engine *Engine) LoadHTMLFS(embedFS fs.FS, patterns ...string) {
+	matches, err := filepath.Glob(pattern)
+	if err != nil {
+		log.Fatalf("godeniter: 匹配磁盘模板失败 [%s]: %v", pattern, err)
+	}
 	tmpl := template.New("").Funcs(engine.funcMap)
-	for _, pattern := range patterns {
-		var err error
-		tmpl, err = tmpl.ParseFS(embedFS, pattern)
+	for _, match := range matches {
+		data, err := os.ReadFile(match)
 		if err != nil {
-			log.Fatalf("godeniter: 加载内嵌模板失败 [%s]: %v", pattern, err)
+			log.Fatalf("godeniter: 读取磁盘模板 [%s] 失败: %v", match, err)
+		}
+		preprocessed := PreprocessHTMLTemplate(string(data))
+		name := filepath.Base(match)
+		var t *template.Template
+		if tmpl.Lookup(name) != nil {
+			t = tmpl.Lookup(name)
+		} else {
+			t = tmpl.New(name)
+		}
+		if _, err := t.Parse(preprocessed); err != nil {
+			log.Fatalf("godeniter: 解析模板文件 [%s] 失败: %v", match, err)
 		}
 	}
 	engine.htmlTemplates = tmpl
 }
+
+// LoadHTMLFS 从嵌入式文件系统 (fs.FS / embed.FS) 加载 HTML 模板，为单文件打包提供开箱即用支持。
+// 原生支持 <!--{{ ... }}--> 无侵入注释模板预处理，纯前端双击打开预览不破坏布局。
+func (engine *Engine) LoadHTMLFS(embedFS fs.FS, patterns ...string) {
+	tmpl, err := ParseHTMLFS(embedFS, engine.funcMap, patterns...)
+	if err != nil {
+		log.Fatalf("godeniter: 加载内嵌模板失败: %v", err)
+	}
+	engine.htmlTemplates = tmpl
+}
+
 
 // Static 映射磁盘上的静态资源目录到指定的 URL 路由前缀。
 // 示例：

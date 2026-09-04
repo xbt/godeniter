@@ -176,3 +176,37 @@ func TestEngine_RedirectAndSession(t *testing.T) {
 		t.Fatalf("Expected Set-Cookie header containing test_session, got: %s", cookie)
 	}
 }
+
+func TestPreprocessHTMLTemplate(t *testing.T) {
+	rawHTML := `
+<!-- 这是普通HTML注释，应完整保留 -->
+<div class="box">
+    <!--{{ if .CurrentUser }}-->
+        <span>欢迎，<!--{{ .CurrentUser }}-->！</span>
+    <!--{{ else }}-->
+        <a href="/login">请登录</a>
+    <!--{{ end }}-->
+</div>
+`
+	processed := PreprocessHTMLTemplate(rawHTML)
+
+	// 1. 验证普通注释完整保留
+	if !strings.Contains(processed, "<!-- 这是普通HTML注释，应完整保留 -->") {
+		t.Errorf("普通注释应完整保留")
+	}
+
+	// 2. 验证 <!--{{ ... }}--> 成功解构为 {{ ... }}
+	if !strings.Contains(processed, "{{ if .CurrentUser }}") {
+		t.Errorf("预期生成 {{ if .CurrentUser }}")
+	}
+	if !strings.Contains(processed, "{{ .CurrentUser }}") {
+		t.Errorf("预期生成 {{ .CurrentUser }}")
+	}
+	if !strings.Contains(processed, "{{ end }}") {
+		t.Errorf("预期生成 {{ end }}")
+	}
+	if strings.Contains(processed, "<!--{{") || strings.Contains(processed, "}}-->") {
+		t.Errorf("不应残留任何 <!--{{ 或 }}--> 标记")
+	}
+}
+

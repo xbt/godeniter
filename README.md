@@ -375,16 +375,23 @@ safeHTML := str.XSSFilter("<script>alert(1)</script>")
 
 ---
 
-## 🎨 服务端 HTML 模板渲染 (html/template)
+## 🎨 服务端 HTML 模板渲染与无侵入注释语法 (Zero-Distortion Templates)
 
-支持 Go 原生 `html/template`，并可通过 Go 1.16+ 原生 `embed.FS` 将视图模板文件直接内嵌至程序中，无需携带额外静态文件夹：
+Godeniter 支持 Go 原生 `html/template`，并内置开箱即用的 `app.LoadHTMLFS(...)` 与 `app.LoadHTMLGlob(...)` 辅助函数。更进一步，Godeniter 独创支持**无侵入 HTML 注释模板语法**（`<!--{{ ... }}-->`）：
+
+### 💡 为什么需要无侵入注释语法？
+* **前端原型双击可预览**：传统的 `{{ if .User }}...{{ end }}` 在前端 UI 设计师或本地浏览器直接双击打开 `.html` 时，会被视为裸文本渲染，破坏 CSS 样式与 DOM 排版。
+* **浏览器天然友好**：写成 `<!--{{ if .User }}-->...<!--{{ end }}-->` 时，静态浏览器会天然将其当成标准 HTML 注释隐藏，页面完全所见即所得！
+* **100% 混用兼容**：标准 `{{ ... }}` 与 `<!--{{ ... }}-->` 可在同文件任意混用，框架在启动时进行预处理转译，运行时走 Go 原生 AST 编译，**零运行时损耗**。
+* **零误伤**：普通的 HTML 注释（如 `<!-- 开发说明注释 -->`）完全保持原样，绝不误处理。
+
+### 示例代码
 
 ```go
 package main
 
 import (
     "embed"
-    "html/template"
     "io/fs"
     "github.com/xbt/godeniter"
 )
@@ -395,9 +402,9 @@ var viewsFS embed.FS
 func main() {
     app := godeniter.Classic()
 
-    // 载入嵌入式视图模板
+    // 1. 一行代码加载嵌入式视图模板（自动支持 <!--{{ ... }}--> 与 {{ ... }}）
     subViews, _ := fs.Sub(viewsFS, "views")
-    app.SetHTMLTemplate(template.Must(template.ParseFS(subViews, "*.html")))
+    app.LoadHTMLFS(subViews, "*.html")
 
     app.Get("/", func(c *godeniter.Context) {
         c.HTML(200, "index.html", godeniter.H{
@@ -408,6 +415,17 @@ func main() {
 
     app.Run(":8080")
 }
+```
+
+**模板文件 `views/detail.html` 示例：**
+```html
+<div class="user-card">
+    <!-- 普通注释被原样保留 -->
+    <!-- 下面使用无侵入注释语法，双击 HTML 原型时该编辑按钮在未登录时不乱码破坏布局 -->
+    <!--{{ if .CurrentUser }}-->
+        <a href="/admin/articles/edit/<!--{{ .Article.ID }}-->" class="edit-btn">✏️ 编辑文章</a>
+    <!--{{ end }}-->
+</div>
 ```
 
 ---
