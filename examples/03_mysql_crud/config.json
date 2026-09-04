@@ -1,0 +1,14 @@
+{
+  "app": {
+    "name": "Godeniter MySQL CRUD Demo",
+    "port": ":8080",
+    "env": "development"
+  },
+  "database": {
+    "driver": "mysql",
+    "dsn": "root:123456@tcp(127.0.0.1:3306)/godeniter_demo?charset=utf8mb4&parseTime=True&loc=Local",
+    "max_open_conns": 50,
+    "max_idle_conns": 10,
+    "conn_max_lifetime": 3600
+  }
+}

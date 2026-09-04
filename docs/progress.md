@@ -70,18 +70,19 @@
   - [x] `embed.FS` 内嵌 HTML 模板与静态资源
   - [x] 模式一：前后端分离 RESTful API + SPA 完整 Demo (`examples/01_api_spa/`)
   - [x] 模式二：经典 PHP 风格服务端渲染 MVC 完整 Demo (`examples/02_mvc_template/`)
+  - [x] 模式三：MySQL 数据库增删改查实战完整 Demo (`examples/03_mysql_crud/`)
   - [x] 跨平台一键编译脚本 (`build.sh`, `build.bat`)，一键生成 Windows `.exe`
 - [x] **全套 CodeIgniter 风格开发者文档体系**
-  - [x] 主入口 [`README.md`](../README.md)
+  - [x] 主入口 [`README.md`](../README.md)（代码用法与单文件打包彻底分离）
   - [x] 架构原理 [`docs/architecture.md`](./architecture.md)
   - [x] 开发进度与接续指南 [`docs/progress.md`](./progress.md)
   - [x] 路由与中间件开发手册 [`docs/routing.md`](./routing.md)
-  - [x] 数据库与 ActiveRecord 手册 [`docs/database.md`](./database.md)
+  - [x] 数据库与 ActiveRecord 手册 [`docs/database.md`](./database.md)（含 MySQL 生产连接池与 Web API 实战）
   - [x] 依赖注入与容器手册 [`docs/dependency_injection.md`](./dependency_injection.md)
   - [x] 文件上传与安全存储手册 [`docs/upload.md`](./upload.md)
   - [x] 字符串与安全辅助库手册 [`docs/string_utils.md`](./string_utils.md)
   - [x] 参数绑定与验证器手册 [`docs/binding_validation.md`](./binding_validation.md)
-  - [x] 服务端会话管理手册 [`docs/session.md`](./session.md)
+  - [x] 服务端会话管理手册 [`docs/session.md`](./session.md)（已实现 Flash Data 闪存消息）
   - [x] 跨平台单文件打包手册 [`docs/build_and_deploy.md`](./build_and_deploy.md)
   - [x] 离线与受限网络开发指南 [`docs/offline.md`](./offline.md)
   - [x] 动态配置与数据库连接手册 [`docs/config.md`](./config.md)
@@ -93,12 +94,10 @@
 
 后续接手开发建议优先考虑以下功能：
 
-1. **数据库驱动接入样例**：
-   * 在 `examples/` 目录下创建连接 SQLite (`modernc.org/sqlite`) 或 MySQL 的完整 CRUD 业务模块。
-2. **Flash 消息支持**：
-   * 在 session 基础上增加类似 CodeIgniter 的一次性提示消息（Flash Data）。
-3. **数据库迁移工具 (Migrator)**：
-   * 增加类似 `php artisan migrate` 的 SQL 迁移执行器。
+1. **数据库迁移工具 (Migrator)**：
+   * 增加类似 `php artisan migrate` 或 `codeigniter spark migrate` 的 SQL 结构迁移执行器。
+2. **连接池健康监测探针 (Health Check)**：
+   * 提供针对 MySQL / SQLite 连接状态的实时监测与探针接口。
 
 ---
 

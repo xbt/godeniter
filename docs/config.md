@@ -125,54 +125,108 @@ func LoadConfig(filePath ...string) *Config {
 
 ---
 
-## 🗄️ 数据库连接动态初始化
+## 🗄️ 数据库连接动态初始化 (SQLite 与 MySQL 示例)
 
-在主入口 `main.go` 中，根据读取到的配置动态连接数据库，并注入到依赖容器中：
+在 `config.json` 中，可自由配置驱动与连接串：
+
+### (1) MySQL 生产配置范例 (`config.json`)
+```json
+{
+  "app": {
+    "name": "Godeniter Demo",
+    "port": ":8080",
+    "env": "production"
+  },
+  "database": {
+    "driver": "mysql",
+    "dsn": "root:123456@tcp(127.0.0.1:3306)/godeniter_demo?charset=utf8mb4&parseTime=True&loc=Local",
+    "max_open_conns": 50,
+    "max_idle_conns": 10,
+    "conn_max_lifetime": 3600
+  }
+}
+```
+
+### (2) SQLite 单文件配置范例 (`config.json`)
+```json
+{
+  "database": {
+    "driver": "sqlite",
+    "dsn": "./data/app.db",
+    "max_open_conns": 1,
+    "max_idle_conns": 1,
+    "conn_max_lifetime": 300
+  }
+}
+```
+
+### (3) 在主入口 `main.go` 中动态连接与注入容器
+在业务代码中，只需根据配置载入连接，无需修改任何代码逻辑：
 
 ```go
 package main
 
 import (
+    "fmt"
+    "time"
+
     "github.com/xbt/godeniter"
     "github.com/xbt/godeniter/db"
-    _ "modernc.org/sqlite" // 纯 Go SQLite 驱动 (或 _ "github.com/go-sql-driver/mysql")
+    _ "github.com/go-sql-driver/mysql" // MySQL 驱动
+    // _ "modernc.org/sqlite"          // SQLite 驱动 (按需启用)
     "my-project/config"
 )
 
 func main() {
     cfg := config.LoadConfig()
-
     app := godeniter.Classic()
 
-    // 动态初始化数据库
+    // 动态初始化数据库 (MySQL 或 SQLite 统一由 config.json 驱动)
     if cfg.Database.DSN != "" {
         database, err := db.Open(cfg.Database.Driver, cfg.Database.DSN)
         if err != nil {
-            panic(fmt.Sprintf("数据库连接失败: %v", err))
-        }
-        database.SetMaxOpenConns(cfg.Database.MaxOpenConns)
-        database.SetMaxIdleConns(cfg.Database.MaxIdleConns)
+            fmt.Printf(">> [WARN] 数据库连接失败: %v\n", err)
+        } else {
+            if cfg.Database.MaxOpenConns > 0 {
+                database.SetMaxOpenConns(cfg.Database.MaxOpenConns)
+            }
+            if cfg.Database.MaxIdleConns > 0 {
+                database.SetMaxIdleConns(cfg.Database.MaxIdleConns)
+            }
+            if cfg.Database.ConnMaxLifetime > 0 {
+                database.SetConnMaxLifetime(time.Duration(cfg.Database.ConnMaxLifetime) * time.Second)
+            }
 
-        // 注入全局依赖容器，Handler 任意使用！
-        app.Map(database)
+            // 测试连通性
+            if err := database.Ping(); err != nil {
+                fmt.Printf(">> [WARN] 数据库 Ping 连通性测试失败: %v\n", err)
+            } else {
+                fmt.Printf(">> [DB] 数据库连接就绪 [%s -> %s]\n", cfg.Database.Driver, cfg.Database.DSN)
+            }
+
+            // 注入全局依赖容器，任意 Handler 可直接声明注入 *db.DB
+            app.Map(database)
+        }
     }
 
     // 动态监听端口
-    app.Run(cfg.App.Port)
+    _ = app.Run(cfg.App.Port)
 }
 ```
 
 ---
 
-## 📦 Windows 单文件交付时的使用场景
+## 💡 现场运维场景：客户机动态修改配置 (免重新编译)
 
-当打包为 `dist/app.exe` 交付给最终客户机时：
+交付可执行文件到生产服务器或客户机后，若需要修改端口或数据库连接，无需重新编译：
 
-1. **客户双击 `app.exe` 首次启动**：
-   * 程序检测到当前目录没有 `config.json`，直接以内置默认端口（如 `:8080`）启动；
-   * 同时在 `app.exe` 同级目录下**自动生成了一份 `config.json`**。
-2. **客户修改端口与数据库**：
-   * 客户直接右键用记事本打开 `config.json`。
-   * 将 `"port": ":8080"` 改为 `"port": ":9090"`。
-   * 保存后重启 `app.exe`，服务立刻在新端口运行！
-   * 真正做到了 **零环境依赖、单文件分发、动态外部配置**。
+1. **首次启动自动就近生成**：
+   * 程序检测到当前目录没有 `config.json` 时，自动在可执行文件旁生成一份标准格式的 `config.json`；
+2. **修改端口与数据库**：
+   * 用记事本或 Vim 打开 `config.json`；
+   * 修改 `"port": ":9090"` 或修改 `"dsn": "user:pwd@tcp(192.168.1.100:3306)/dbname..."`；
+   * 保存并重启程序，服务即刻以新端口与新数据库上线生效；
+3. **云原生环境优先**：
+   * 在 Docker / K8s 环境中，直接传入环境变量 `PORT=:8080`、`DATABASE_DSN="..."` 即可无感覆盖。
+
+> ℹ️ **关于程序构建与二进制打包**：请参阅独立的 [《跨平台单文件打包与交付手册 (docs/build_and_deploy.md)》](./build_and_deploy.md)，开发阶段无需关注打包，专注于业务代码编写即可。

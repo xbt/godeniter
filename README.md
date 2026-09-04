@@ -49,9 +49,6 @@ cd ../godeniter-starter
 # 极速本地启动
 go run main.go
 # 浏览器访问: http://127.0.0.1:8080 (带管理后台、Session 登录与 API 演示)
-
-# 一键编译为 Windows 独立单文件 .exe
-./build.sh
 ```
 
 ---
@@ -104,7 +101,7 @@ go run ./examples/02_mvc_template/main.go
   * 跨域支持：内置 `middleware.CORS()`
   * 控制器依赖注入：自动将 `ArticleService` 注入到 Handler 中
   * 封面图片异步上传与预览、文章分页检索与标题关键词模糊搜索
-  * 内嵌现代化管理面板与交互式开发者手册，一键编译为 `.exe`，双击即用。
+  * 内嵌现代化管理面板与交互式开发者手册。
 * **快速运行命令**：
   ```bash
   go run ./examples/01_api_spa/main.go
@@ -116,10 +113,23 @@ go run ./examples/02_mvc_template/main.go
   * 经典的 MVC 目录分层（`controllers/`, `models/`, `views/`）
   * 原生 `html/template` 服务端模板数据循环与条件分支渲染
   * 传统 HTML 表单 POST 提交验证与页面重定向（`c.Redirect`）
-  * Session / Cookie 登录状态管理（`c.SetCookie` / `c.Cookie`）与头像上传
+  * Session / Cookie 登录状态管理（`c.SetCookie` / `c.Cookie`）与头像上传。
 * **快速运行命令**：
   ```bash
   go run ./examples/02_mvc_template/main.go
+  ```
+
+### 3. [模式三：MySQL 数据库增删改查实战 (RESTful CRUD + 连接池 + 事务) 方案](./examples/03_mysql_crud/)
+* **适用场景**：基于关系型数据库 MySQL 生产环境的业务系统、文章/商品数据中台。
+* **包含特性**：
+  * 真实 MySQL 连接池调优与连通性自检（`Ping`）
+  * 实体模型与数据库字段映射（`db:"tag"`）
+  * 纯标准库 ActiveRecord 链式查询构造器（`Where`, `Like`, `OrderBy`）
+  * 一键分页查询助手（`Paginate`）自动计算总数与分页元数据
+  * 数据表新增、批量插入、详情自增浏览量、逻辑软删除与 ACID 事务保护（`Transaction`）
+* **快速运行命令**：
+  ```bash
+  cd ./examples/03_mysql_crud && go run main.go
   ```
 
 ---
@@ -194,22 +204,68 @@ func main() {
 
 ---
 
-## 🗄️ 数据库操作与 ActiveRecord (类似 CodeIgniter 3 增强版)
+## 🗄️ 数据库操作与 ActiveRecord (支持 MySQL 与 SQLite)
 
-基于 Go 标准库 `database/sql`，提供极度舒适的链式构造器与一键分页能力：
+底层基于 Go 原生 `database/sql`，提供极度舒适的链式构造器、一键分页与事务能力。
+
+### 1. 初始化数据库连接与连接池 (以 MySQL 为例)
+```go
+package main
+
+import (
+    "github.com/xbt/godeniter"
+    "github.com/xbt/godeniter/db"
+    _ "github.com/go-sql-driver/mysql" // 引入 MySQL 驱动 (或 _ "modernc.org/sqlite")
+)
+
+func main() {
+    app := godeniter.Classic()
+
+    // 1. 初始化 MySQL 连接池
+    dsn := "root:123456@tcp(127.0.0.1:3306)/godeniter_demo?charset=utf8mb4&parseTime=True&loc=Local"
+    database, err := db.Open("mysql", dsn)
+    if err != nil {
+        panic("数据库连接失败: " + err.Error())
+    }
+    database.SetMaxOpenConns(50) // 最大打开连接数
+    database.SetMaxIdleConns(10) // 最大空闲连接数
+
+    // 2. 注入全局依赖容器，所有 Controller/Handler 均可直接声明注入 *db.DB
+    app.Map(database)
+
+    // 3. 在 Handler 中直接使用 database 执行查询
+    app.Get("/api/users", func(c *godeniter.Context, database *db.DB) {
+        var users []User
+        pager, err := database.Table("users").
+            Where("status = ?", 1).
+            Like("username", "%admin%").
+            OrderBy("id DESC").
+            Paginate(1, 10, &users)
+        if err != nil {
+            c.Fail(500, err.Error())
+            return
+        }
+        c.Success(godeniter.H{"list": users, "pager": pager})
+    })
+
+    app.Run(":8080")
+}
+```
+
+### 2. 丰富查询操作 (对比 CodeIgniter 3)
 
 ```go
 type User struct {
-    ID       int    `db:"id"`
-    Username string `db:"username"`
-    Email    string `db:"email"`
-    Age      int    `db:"age"`
-    Avatar   string `db:"avatar"`
+    ID       int    `db:"id"       json:"id"`
+    Username string `db:"username" json:"username"`
+    Email    string `db:"email"    json:"email"`
+    Age      int    `db:"age"      json:"age"`
+    Avatar   string `db:"avatar"   json:"avatar"`
 }
 
 // 1. 模糊搜索 (Like) 与范围过滤 (Between)
 var users []User
-err := db.Table("users").
+err := database.Table("users").
     Select("users.id", "users.username", "profiles.avatar").
     LeftJoin("profiles", "users.id = profiles.user_id").
     Where("status = ?", 1).
@@ -220,31 +276,33 @@ err := db.Table("users").
 
 // 2. 一键分页查询 (Paginate)
 var list []User
-pager, err := db.Table("users").
+pager, err := database.Table("users").
     Where("status = ?", 1).
     OrderBy("id DESC").
     Paginate(1, 10, &list)
 // pager 包含: Total (总数), TotalPages (总页数), Page (当前页), PageSize, HasNext, HasPrev
 
 // 3. 聚合统计与快捷自增 (Increment / Sum / Avg / Count)
-count, _ := db.Table("users").Count()
-sumViews, _ := db.Table("articles").Sum("views")
-// 快捷自增阅读量
-rows, _ := db.Table("articles").Where("id = ?", 1).Increment("views", 1)
+count, _ := database.Table("users").Count()
+sumViews, _ := database.Table("articles").Sum("views")
+rows, _ := database.Table("articles").Where("id = ?", 1).Increment("views", 1)
 
-// 4. 批量插入 (InsertBatch)
+// 4. 插入与批量插入 (Insert / InsertBatch)
+id, _ := database.Table("users").Insert(map[string]any{"username": "ben", "age": 28})
 records := []any{
     map[string]any{"username": "user1", "age": 20},
     map[string]any{"username": "user2", "age": 22},
 }
-_, err = db.Table("users").InsertBatch(records)
+_, err = database.Table("users").InsertBatch(records)
 
 // 5. 事务保护 (自动 Commit / Panic / Error 回滚)
-err := db.Transaction(func(tx *db.Tx) error {
+err := database.Transaction(func(tx *db.Tx) error {
     _, err := tx.Table("accounts").Where("id = ?", 1).Update(map[string]any{"balance": 500})
     return err
 })
 ```
+
+👉 详见专有手册：[**《数据库与 ActiveRecord 开发手册 (docs/database.md)》**](./docs/database.md)（含完整 MySQL 表设计 DDL、全套 CRUD 及 RESTful 实战范例）
 
 ---
 
@@ -314,18 +372,18 @@ safeHTML := str.XSSFilter("<script>alert(1)</script>")
 
 ---
 
-## 📦 单二进制打包与 Windows 客户机交付
+## 🎨 服务端 HTML 模板渲染 (html/template)
 
-利用 Go 1.16+ 原生 `embed` 特性，可以将前端页面和静态资源全部打入一个可执行二进制文件中：
+支持 Go 原生 `html/template`，并可通过 Go 1.16+ 原生 `embed.FS` 将视图模板文件直接内嵌至程序中，无需携带额外静态文件夹：
 
 ```go
 package main
 
 import (
     "embed"
-    "github.com/xbt/godeniter"
     "html/template"
     "io/fs"
+    "github.com/xbt/godeniter"
 )
 
 //go:embed views/*
@@ -334,35 +392,20 @@ var viewsFS embed.FS
 func main() {
     app := godeniter.Classic()
 
-    // 加载嵌入式模板
+    // 载入嵌入式视图模板
     subViews, _ := fs.Sub(viewsFS, "views")
     app.SetHTMLTemplate(template.Must(template.ParseFS(subViews, "*.html")))
 
     app.Get("/", func(c *godeniter.Context) {
-        c.HTML(200, "index.html", godeniter.H{"Title": "欢迎使用 Godeniter"})
+        c.HTML(200, "index.html", godeniter.H{
+            "Title": "欢迎使用 Godeniter",
+            "User":  "Admin",
+        })
     })
 
     app.Run(":8080")
 }
 ```
-
-### 一键构建命令
-
-* **macOS / Linux 环境下生成 Windows `.exe`**：
-  ```bash
-  # 编译 Demo 1 (API + SPA 模式)
-  CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o dist/demo1_api_spa.exe ./examples/01_api_spa/main.go
-
-  # 编译 Demo 2 (MVC 模板渲染模式)
-  CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o dist/demo2_mvc_template.exe ./examples/02_mvc_template/main.go
-  ```
-* **运行一键构建脚本**：
-  ```bash
-  ./build.sh      # macOS / Linux (一键编译所有示例并生成 dist/*.exe)
-  build.bat       # Windows (一键编译所有示例)
-  ```
-
-构建生成的 `.exe` 文件无需安装任何环境，直接拷贝给客户，**双击即可运行**并在终端提示访问地址（如 `http://127.0.0.1:8080`）。
 
 ---
 
@@ -440,6 +483,28 @@ godeniter new my-web-project --template=mvc
 
 ---
 
+## 📦 跨平台构建、单文件打包与交付部署 (Build & Deploy)
+
+Godeniter 基于 **100% 纯 Go 标准库与 `embed.FS`** 设计，天然具备卓越的跨平台交叉编译能力。在日常开发时，开发者只需专注于业务逻辑编写与 `go run main.go` 调试；在最终向客户机交付部署时，可直接编译为单个二进制文件：
+
+* **运行一键构建脚本（自动化产出全平台二进制）**：
+  ```bash
+  ./build.sh      # macOS / Linux (一键编译全部应用至 dist/ 目录)
+  build.bat       # Windows (一键编译全部应用)
+  ```
+* **手动交叉编译 Windows 独立 `.exe` 单文件**：
+  ```bash
+  # 纯 Go 0 依赖，无需配置任何 Windows gcc/CGO 交叉编译环境，秒级生成
+  CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o dist/app.exe main.go
+  ```
+* **现场免环境交付体验**：
+  * 生成的 `.exe` 已经内嵌了前端静态网页与 HTML 模板，无需在客户机安装任何 Go 环境或依赖库；
+  * 直接拷贝给客户，**双击即可直接运行**，终端自动输出访问地址与启动 Banner。
+
+👉 详见专有运维手册：[**《跨平台单文件打包与 Windows 客户机交付手册 (docs/build_and_deploy.md)》**](./docs/build_and_deploy.md)
+
+---
+
 ## 📂 项目模块结构
 
 * **根目录核心模块**（极简纯粹，仅保留启动与核心上下文）：
@@ -460,8 +525,11 @@ godeniter new my-web-project --template=mvc
   * [`cmd/godeniter/`](./cmd/godeniter/) - 官方 CLI 脚手架工具 (`godeniter new`)
   * [`examples/01_api_spa/`](./examples/01_api_spa/) - 模式一：前后端分离 RESTful API + SPA 单页 (带文件上传与分页) 完整 Demo
   * [`examples/02_mvc_template/`](./examples/02_mvc_template/) - 模式二：经典 PHP 风格服务端渲染 MVC + HTML Template (带头像上传与搜索) 完整 Demo
+  * [`examples/03_mysql_crud/`](./examples/03_mysql_crud/) - 模式三：MySQL 数据库增删改查实战 (RESTful CRUD + 连接池 + 事务) 完整 Demo
   * [`dist/`](./dist/) - 编译生成的跨平台单文件可执行程序输出目录
 * **核心文档与开发手册 (`docs/`)**：
-  * [`docs/offline.md`](./docs/offline.md) - 离线环境与受限网络开发/编译指南 (Zip 包即用与单文件交付)
+  * [`docs/database.md`](./docs/database.md) - 数据库与 ActiveRecord 开发手册 (含 MySQL 生产连接池与 CRUD 实战)
   * [`docs/config.md`](./docs/config.md) - 0 依赖动态配置 (`config.json`)、数据库连接与客户机端口修改手册
+  * [`docs/build_and_deploy.md`](./docs/build_and_deploy.md) - 跨平台单文件打包与 Windows 客户机交付手册
+  * [`docs/offline.md`](./docs/offline.md) - 离线环境与受限网络开发/编译指南 (Zip 包即用与单文件交付)
   * [`docs/progress.md`](./docs/progress.md) - 框架开发进度、架构设计原则与版本演进记录
