@@ -28,33 +28,40 @@ void native_init_app(void) {
         if (!globalActionTarget) {
             globalActionTarget = [[GodeniterTrayActionTarget alloc] init];
         }
+        [NSApp finishLaunching];
     }
 }
 
 void native_create_status_bar(const void* icon_bytes, size_t icon_len, const char* fallback_title, const char* tooltip) {
     @autoreleasepool {
         if (!globalStatusItem) {
-            globalStatusItem = [[NSStatusBar systemStatusBar] statusItemWithLength:NSSquareStatusItemLength];
+            // 使用自适应宽度，避免在刘海屏或文字较多时被系统截断隐藏
+            globalStatusItem = [[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength];
         }
         NSStatusBarButton *button = [globalStatusItem button];
         if (tooltip && strlen(tooltip) > 0) {
             [button setToolTip:[NSString stringWithUTF8String:tooltip]];
         }
+
+        NSString *title = (fallback_title && strlen(fallback_title) > 0) ? [NSString stringWithUTF8String:fallback_title] : @"Godeniter";
         BOOL iconSet = NO;
+
         if (icon_bytes && icon_len > 0) {
             NSData *data = [NSData dataWithBytes:icon_bytes length:icon_len];
             NSImage *img = [[NSImage alloc] initWithData:data];
-            if (img) {
+            if (img && [img isValid]) {
                 [img setSize:NSMakeSize(18, 18)];
-                [img setTemplate:YES]; // 适配 Mac 浅色与深色深浅模式自适应反色
+                // 保持原图色彩，不盲目 setTemplate:YES，避免彩色图标在 Dark Mode 深色菜单栏下变黑隐形
                 [button setImage:img];
-                [button setTitle:@""];
+                [button setImagePosition:NSImageLeft];
+                [button setTitle:[NSString stringWithFormat:@" %@", title]];
                 iconSet = YES;
             }
         }
+
         if (!iconSet) {
-            NSString *title = (fallback_title && strlen(fallback_title) > 0) ? [NSString stringWithUTF8String:fallback_title] : @"🚀";
-            [button setTitle:title];
+            // 回退方案: 图标与标题结合，Emoji 🚀 无论浅色还是深色模式均 100% 显眼可见
+            [button setTitle:[NSString stringWithFormat:@"🚀 %@", title]];
             [button setImage:nil];
         }
     }

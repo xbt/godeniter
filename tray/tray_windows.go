@@ -7,6 +7,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"os"
+	"os/signal"
 	"runtime"
 	"sync"
 	"syscall"
@@ -158,6 +159,18 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 func Run(opts Options) error {
 	runtime.LockOSThread()
 	globalOpts = opts
+
+	// 捕获系统退出信号 (Ctrl+C 与 kill)，确保控制台随时按 Ctrl+C 能平滑关闭并安全退出
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-sigChan
+		if opts.OnExit != nil {
+			opts.OnExit()
+		}
+		Quit()
+		os.Exit(0)
+	}()
 
 	// 1. 若配置了本地图标物理路径，尝试读取
 	if len(opts.IconBytes) == 0 && opts.IconPath != "" {

@@ -13,8 +13,10 @@ import "C"
 import (
 	"fmt"
 	"os"
+	"os/signal"
 	"runtime"
 	"sync"
+	"syscall"
 	"unsafe"
 )
 
@@ -50,6 +52,18 @@ func Run(opts Options) error {
 	// 2. 初始化 Cocoa NSApplication 为 Accessory 模式
 	C.native_init_app()
 
+	// 捕获系统退出信号 (Ctrl+C 与 kill)，确保在终端按 Ctrl+C 能平滑关闭并安全退出
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-sigChan
+		if opts.OnExit != nil {
+			opts.OnExit()
+		}
+		Quit()
+		os.Exit(0)
+	}()
+
 	// 3. 创建状态栏图标与提示
 	var cIcon unsafe.Pointer
 	var cIconLen C.size_t
@@ -58,12 +72,16 @@ func Run(opts Options) error {
 		cIconLen = C.size_t(len(opts.IconBytes))
 	}
 
-	cTitle := C.CString("🚀")
+	appTitle := opts.Title
+	if appTitle == "" {
+		appTitle = "Godeniter"
+	}
+	cTitle := C.CString(appTitle)
 	defer C.free(unsafe.Pointer(cTitle))
 
 	tip := opts.Tooltip
 	if tip == "" {
-		tip = opts.Title
+		tip = appTitle
 	}
 	cTooltip := C.CString(tip)
 	defer C.free(unsafe.Pointer(cTooltip))
