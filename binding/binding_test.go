@@ -2,6 +2,7 @@ package binding
 
 import (
 	"bytes"
+	"mime/multipart"
 	"net/http/httptest"
 	"net/url"
 	"strings"
@@ -99,3 +100,32 @@ func TestBindForm(t *testing.T) {
 		t.Errorf("BindForm 解析错误: %+v", dto)
 	}
 }
+
+func TestBindMultipartForm(t *testing.T) {
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	_ = writer.WriteField("username", "multipart_user")
+	_ = writer.WriteField("email", "mp@user.com")
+	_ = writer.WriteField("age", "35")
+	_ = writer.WriteField("phone", "1234567")
+
+	part, err := writer.CreateFormFile("avatar", "avatar.png")
+	if err != nil {
+		t.Fatalf("CreateFormFile 失败: %v", err)
+	}
+	_, _ = part.Write([]byte("fake image data"))
+	_ = writer.Close()
+
+	req := httptest.NewRequest("POST", "/upload_submit", body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	var dto UserRegisterDTO
+	if err := Bind(req, &dto); err != nil {
+		t.Fatalf("Bind multipart/form-data 失败: %v", err)
+	}
+
+	if dto.Username != "multipart_user" || dto.Email != "mp@user.com" || dto.Age != 35 || dto.Phone != "1234567" {
+		t.Errorf("Bind multipart/form-data 字段解析错误: %+v", dto)
+	}
+}
+

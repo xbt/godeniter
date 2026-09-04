@@ -31,12 +31,40 @@ func BindQuery(req *http.Request, obj any) error {
 	return Validate(obj)
 }
 
-// BindForm 解析 POST/PUT 表单数据并映射到目标结构体，随后自动执行校验。
+// BindForm 解析 POST/PUT 表单数据（自动兼容 application/x-www-form-urlencoded 与 multipart/form-data）并映射到目标结构体，随后自动执行校验。
 func BindForm(req *http.Request, obj any) error {
-	if err := req.ParseForm(); err != nil {
-		return fmt.Errorf("binding: 表单解析失败: %w", err)
+	contentType := req.Header.Get("Content-Type")
+	if strings.Contains(contentType, "multipart/form-data") {
+		if req.MultipartForm == nil {
+			// 默认最大 32MB 内存缓存解析 multipart 表单数据
+			if err := req.ParseMultipartForm(32 << 20); err != nil && err != http.ErrNotMultipart {
+				return fmt.Errorf("binding: multipart 表单解析失败: %w", err)
+			}
+		}
+	} else {
+		if err := req.ParseForm(); err != nil {
+			return fmt.Errorf("binding: 表单解析失败: %w", err)
+		}
 	}
-	if err := mapFormValuesToStruct(req.Form, obj); err != nil {
+
+	// 整合普通表单与 multipart 表单参数，确保文本字段完整映射
+	values := make(url.Values)
+	for k, v := range req.URL.Query() {
+		values[k] = append(values[k], v...)
+	}
+	for k, v := range req.PostForm {
+		values[k] = append(values[k], v...)
+	}
+	if req.MultipartForm != nil && req.MultipartForm.Value != nil {
+		for k, v := range req.MultipartForm.Value {
+			values[k] = append(values[k], v...)
+		}
+	}
+	if len(values) == 0 && len(req.Form) > 0 {
+		values = req.Form
+	}
+
+	if err := mapFormValuesToStruct(values, obj); err != nil {
 		return err
 	}
 	return Validate(obj)
