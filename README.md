@@ -16,11 +16,31 @@
 * **高性能 Trie 树动态路由**：支持 RESTful 动词、`:param` 动态命名参数、`*filepath` 全路径通配符、路由多级分组与分组中间件。
 * **洋葱圈中间件栈**：提供标准的 `c.Next()` 与 `c.Abort()` 流水线机制，内置 Logger、Recovery 与 CORS 中间件。
 * **PHP 风格轻量 QueryBuilder**：基于标准库 `database/sql` 封装链式 SQL 构建器，支持 SQLite 与 MySQL，提供直观的 ActiveRecord 体验。
-## 📦 如何在新项目中开启开发 (推荐方式)
+## 📦 如何在项目中引用 Godeniter
 
-### 方式一：直接使用官方脚手架项目 ([`godeniter-starter`](file:///Users/ben/godeniter-starter)) ⭐ (强烈推荐)
+### 方式一：直接通过标准 `go get` 安装 ⭐ (最简便)
 
-在与 `godeniter` 同级目录下，我们提供了预先搭建好标准目录结构（配置、分层控制器、模型、业务层、中间件、视图与一键打包脚本）的独立模板工程：
+```bash
+# 在您的新项目目录下
+go mod init my-app
+go get -u github.com/xbt/godeniter
+```
+
+在代码中直接导入使用：
+```go
+import (
+    "github.com/xbt/godeniter"
+    "github.com/xbt/godeniter/router"
+    "github.com/xbt/godeniter/middleware"
+    "github.com/xbt/godeniter/db"
+    "github.com/xbt/godeniter/utils/str"
+    "github.com/xbt/godeniter/utils/upload"
+)
+```
+
+### 方式二：使用官方开箱即用脚手架项目 ([`godeniter-starter`](https://github.com/xbt/godeniter/tree/main/../godeniter-starter))
+
+我们提供了预先搭建好标准分层结构（配置、控制器、模型、业务层、中间件、视图与一键打包脚本）的独立模板工程：
 
 ```bash
 # 进入 starter 工程
@@ -32,29 +52,6 @@ go run main.go
 
 # 一键编译为 Windows 独立单文件 .exe
 ./build.sh
-```
-
-### 方式二：在全新空项目中手动引入 Godeniter 模块
-
-```bash
-# 1. 在新项目目录下初始化
-go mod init my-app
-
-# 2. 引入 godeniter 模块 (本地或远程引用)
-go mod edit -replace godeniter=../godeniter
-go mod tidy
-```
-
-在代码中直接导入：
-```go
-import (
-    "godeniter"
-    "godeniter/router"
-    "godeniter/middleware"
-    "godeniter/db"
-    "godeniter/utils/str"
-    "godeniter/utils/upload"
-)
 ```
 
 ---
@@ -112,8 +109,8 @@ go run ./examples/02_mvc_template/main.go
 package main
 
 import (
-    "godeniter"
-    "godeniter/router"
+    "github.com/xbt/godeniter"
+    "github.com/xbt/godeniter/router"
     "net/http"
 )
 
@@ -231,7 +228,7 @@ err := db.Transaction(func(tx *db.Tx) error {
 提供对标 CodeIgniter Upload 类的一行代码上传与安全校验：
 
 ```go
-import "godeniter/utils/upload"
+import "github.com/xbt/godeniter/utils/upload"
 
 app.Post("/upload/avatar", func(c *godeniter.Context) {
     file, err := c.FormFile("avatar")
@@ -264,7 +261,7 @@ app.Post("/upload/avatar", func(c *godeniter.Context) {
 对标 CodeIgniter `string_helper`, `text_helper`, `security_helper`：
 
 ```go
-import "godeniter/utils/str"
+import "github.com/xbt/godeniter/utils/str"
 
 // 1. 随机生成
 code := str.RandomNumeric(6)     // 6位数字验证码 (如 "839201")
@@ -301,7 +298,7 @@ package main
 
 import (
     "embed"
-    "godeniter"
+    "github.com/xbt/godeniter"
     "html/template"
     "io/fs"
 )
@@ -373,7 +370,7 @@ app.Post("/register", func(c *godeniter.Context) {
 提供类似 PHP `$_SESSION` 的极简体验，基于 HMAC-SHA256 安全签名的防篡改 CookieStore，支持开箱即用的无状态单文件交付：
 
 ```go
-import "godeniter/session"
+import "github.com/xbt/godeniter/session"
 
 func main() {
     app := godeniter.Classic()

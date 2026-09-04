@@ -7,7 +7,7 @@
 ## 1. 常用函数列表
 
 ```go
-import "godeniter/utils/str"
+import "github.com/xbt/godeniter/utils/str"
 
 // 1. 随机字符生成
 str.Random(16)            // 生成16位随机字符串

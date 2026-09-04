@@ -166,23 +166,13 @@
                 </div>
                 <div class="card">
                     <div class="card-title">🔤 字符串处理完整可运行代码示例</div>
-                    <p class="desc">引入 <code>"godeniter/utils/str"</code> 即可直接调用，100% 纯 Go 标准库实现。</p>
+                    <p class="desc">引入 <code>"github.com/xbt/godeniter/utils/str"</code> 即可直接调用，100% 纯 Go 标准库实现。</p>
                     <div class="code-container">
                         <button class="btn-copy" onclick="copyCode(this)">复制代码</button>
-                        <pre>package main
+                        <pre><code>package main
 
 import (
     "fmt"
-    "godeniter/utils/str"
-)
-
-func main() {
-    // 1. 随机字符与唯一标识生成 (验证码 / Token / UUID)
-    code := str.RandomNumeric(6)    // "839201" (6位纯数字验证码)
-    token := str.Random(32)         // 32位高安全性随机Token
-    uuid := str.UUID()              // "f47ac10b-58cc-4372-a567-0e02b2c3d479" (RFC4122 v4 UUID)
-
-    // 2. 命名规范互转 (驼峰 / 蛇形 / 短横线)
     snake := str.SnakeCase("UserProfile")        // "user_profile"
     camel := str.CamelCase("user_profile", true) // "UserProfile" (大驼峰)
     smallCamel := str.CamelCase("user_profile", false) // "userProfile" (小驼峰)
@@ -220,8 +210,8 @@ func main() {
                         <pre>package main
 
 import (
-    "godeniter"
-    "godeniter/utils/upload"
+    "github.com/xbt/godeniter"
+    "github.com/xbt/godeniter/utils/upload"
 )
 
 func main() {
@@ -276,7 +266,7 @@ func main() {
                         <pre>package main
 
 import (
-    "godeniter/db"
+    "github.com/xbt/godeniter/db"
     _ "github.com/go-sql-driver/mysql" // 或 _ "modernc.org/sqlite"
 )
 
@@ -333,8 +323,8 @@ func main() {
                         <pre>package main
 
 import (
-    "godeniter"
-    "godeniter/router"
+    "github.com/xbt/godeniter"
+    "github.com/xbt/godeniter/router"
 )
 
 func main() {
@@ -401,8 +391,9 @@ func main() {
                         <pre>package main
 
 import (
-    "godeniter"
-    "godeniter/session"
+    "github.com/xbt/godeniter"
+    "github.com/xbt/godeniter/session"
+    "net/http"
 )
 
 func main() {

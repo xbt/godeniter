@@ -10,7 +10,7 @@ Godeniter 内置了基于前缀树（Trie Tree）的高性能动态路由器，�
 package main
 
 import (
-    "godeniter"
+    "github.com/xbt/godeniter"
     "net/http"
 )
 

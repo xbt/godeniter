@@ -10,8 +10,8 @@
 package main
 
 import (
-    "godeniter"
-    "godeniter/session"
+    "github.com/xbt/godeniter"
+    "github.com/xbt/godeniter/session"
 )
 
 func main() {

@@ -11,7 +11,7 @@ package main
 
 import (
     "embed"
-    "godeniter"
+    "github.com/xbt/godeniter"
     "net/http"
 )
 

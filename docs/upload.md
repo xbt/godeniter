@@ -10,8 +10,8 @@ Godeniter 内置了类似 **PHP CodeIgniter Upload 类** 的上传处理机制�
 package main
 
 import (
-    "godeniter"
-    "godeniter/utils/upload"
+    "github.com/xbt/godeniter"
+    "github.com/xbt/godeniter/utils/upload"
 )
 
 func main() {

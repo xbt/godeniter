@@ -10,7 +10,7 @@ Godeniter 内置了类似 **PHP CodeIgniter 3** 的链式查询构造器（Query
 package main
 
 import (
-    "godeniter/db"
+    "github.com/xbt/godeniter/db"
     _ "github.com/go-sql-driver/mysql" // 或 _ "modernc.org/sqlite"
 )
 
