@@ -518,6 +518,10 @@ Godeniter 基于 **100% 纯 Go 标准库与 `embed.FS`** 设计，天然具备�
   # 纯 Go 0 依赖，无需配置任何 Windows gcc/CGO 交叉编译环境，秒级生成
   CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o dist/app.exe main.go
   ```
+* **纯标准库 Windows 图标编译器与动态检测 (`utils/rsrc` / `cmd/rsrc`)**：
+  * **0 外部第三方依赖**：框架原生内置纯 Go 标准库实现的 Windows COFF 资源段编译器，**彻底告别 `rsrc`、`goversioninfo` 或 GCC `windres` 等外部工具链**；
+  * **动态检测 `app.ico`**：打包脚本自动探测当前工程是否存在 `app.ico` / `favicon.ico`，按需自动转译为 `resource_windows_amd64.syso`；
+  * **桌面级专属图标**：编译出的 Windows `.exe` 单文件在资源管理器与桌面上自动展示定制应用图标，同时作为网站 Favicon 响应，达成专业客户端交付水准。
 * **现场免环境交付体验**：
   * 生成的 `.exe` 已经内嵌了前端静态网页与 HTML 模板，无需在客户机安装任何 Go 环境或依赖库；
   * 直接拷贝给客户，**双击即可直接运行**，终端自动输出访问地址与启动 Banner。

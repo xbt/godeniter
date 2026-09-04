@@ -36,10 +36,17 @@ CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o ${OUTPUT_DI
 go build -ldflags="-s -w" -o ${OUTPUT_DIR}/demo2_mvc_template ./examples/02_mvc_template/main.go
 echo "   -> Created: ${OUTPUT_DIR}/demo2_mvc_template.exe & ${OUTPUT_DIR}/demo2_mvc_template"
 
+# 5. 编译纯 Go 标准库 Windows 资源图标编译器 (cmd/rsrc)
+echo ">> Building Windows Resource Compiler (cmd/rsrc)..."
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o ${OUTPUT_DIR}/rsrc.exe ./cmd/rsrc/main.go
+go build -ldflags="-s -w" -o ${OUTPUT_DIR}/rsrc ./cmd/rsrc/main.go
+echo "   -> Created: ${OUTPUT_DIR}/rsrc.exe & ${OUTPUT_DIR}/rsrc"
+
 echo "=========================================================="
 echo " Build Completed Successfully!"
 echo " All binaries generated in: ${OUTPUT_DIR}/"
 echo "   - dist/godeniter (CLI 脚手架工具)"
+echo "   - dist/rsrc (纯标准库 Windows 图标/资源段编译器)"
 echo "   - dist/demo1_api_spa.exe (API + SPA 模式单文件)"
 echo "   - dist/demo2_mvc_template.exe (经典 MVC 模式单文件)"
 echo "=========================================================="
