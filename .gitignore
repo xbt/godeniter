@@ -19,12 +19,15 @@ bin/
 
 # IDE and Editor configurations
 .idea/
+*.iml
 .vscode/
 *.swp
 *.swo
 *~
 .DS_Store
 
-# Temporary files
+# Temporary and upload files
 scratch/
 tmp/
+uploads/*
+!uploads/.gitkeep
