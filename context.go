@@ -376,7 +376,6 @@ func (c *Context) Fail(code int, message string) {
 
 // Redirect 执行 HTTP 重定向跳转 (如 301 永久重定向, 302/303 临时重定向)。
 func (c *Context) Redirect(code int, location string) {
-	c.Status(code)
 	http.Redirect(c.Res, c.Req, location, code)
 }
 

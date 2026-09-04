@@ -3,6 +3,7 @@ package godeniter
 import (
 	"encoding/json"
 	"github.com/xbt/godeniter/router"
+	"github.com/xbt/godeniter/session"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -145,5 +146,33 @@ func TestEngine_GroupAndPost(t *testing.T) {
 	json.Unmarshal(w.Body.Bytes(), &res)
 	if res["token"] != "token_for_ben" {
 		t.Errorf("Token 返回值不符合预期: %v", res)
+	}
+}
+
+func TestEngine_RedirectAndSession(t *testing.T) {
+	app := Classic()
+	store := session.NewCookieStore("my-secret-key-123456")
+	app.Use(Session(store, "test_session"))
+
+	app.Post("/login", func(c *Context, sess session.Session) {
+		sess.Set("username", "admin")
+		sess.SetFlash("notice", "login successful")
+		c.Redirect(http.StatusFound, "/dashboard")
+	})
+
+	req := httptest.NewRequest("POST", "/login", nil)
+	rec := httptest.NewRecorder()
+	app.ServeHTTP(rec, req)
+
+	res := rec.Result()
+	if res.StatusCode != http.StatusFound {
+		t.Fatalf("Expected 302 redirect, got %d", res.StatusCode)
+	}
+	if res.Header.Get("Location") != "/dashboard" {
+		t.Fatalf("Expected Location: /dashboard, got %s", res.Header.Get("Location"))
+	}
+	cookie := res.Header.Get("Set-Cookie")
+	if !strings.Contains(cookie, "test_session=") {
+		t.Fatalf("Expected Set-Cookie header containing test_session, got: %s", cookie)
 	}
 }

@@ -149,7 +149,13 @@ func (s *DefaultSession) IsModified() bool {
 
 func (s *DefaultSession) Save() error {
 	if s.store != nil && s.w != nil {
-		return s.store.Save(s.w, s.name, s)
+		err := s.store.Save(s.w, s.name, s)
+		if err == nil {
+			s.mu.Lock()
+			s.modified = false
+			s.mu.Unlock()
+		}
+		return err
 	}
 	return nil
 }

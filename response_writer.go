@@ -21,14 +21,18 @@ type ResponseWriter interface {
 
 	// Written 返回响应头是否已经被刷新写入。
 	Written() bool
+
+	// Before 注册一个在响应头实际写入网络前执行的钩子函数 (如用于写入 Session Cookie 等)。
+	Before(func())
 }
 
 // responseWriter 是 ResponseWriter 接口的默认实现。
 type responseWriter struct {
 	http.ResponseWriter
-	status  int
-	size    int
-	written bool
+	status      int
+	size        int
+	written     bool
+	beforeHooks []func()
 }
 
 // newResponseWriter 创建并初始化一个 ResponseWriter 包装器。
@@ -38,12 +42,28 @@ func newResponseWriter(w http.ResponseWriter) *responseWriter {
 		status:         http.StatusOK, // 默认为 200 OK
 		size:           0,
 		written:        false,
+		beforeHooks:    make([]func(), 0),
 	}
+}
+
+// Before 注册一个在 WriteHeader 真正执行前触发的回调钩子。
+func (w *responseWriter) Before(fn func()) {
+	if fn != nil {
+		w.beforeHooks = append(w.beforeHooks, fn)
+	}
+}
+
+func (w *responseWriter) triggerBefore() {
+	for _, fn := range w.beforeHooks {
+		fn()
+	}
+	w.beforeHooks = nil
 }
 
 // WriteHeader 记录状态码并写入底层响应头。
 func (w *responseWriter) WriteHeader(code int) {
 	if !w.written {
+		w.triggerBefore()
 		w.status = code
 		w.written = true
 		w.ResponseWriter.WriteHeader(code)

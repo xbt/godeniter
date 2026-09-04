@@ -106,6 +106,15 @@ func Session(store session.Store, sessionName ...string) HandlerFunc {
 		c.Set("session", sess)
 		c.MapTo(sess, (*session.Session)(nil))
 
+		// 挂载响应头写入前钩子：在发送 WriteHeader (如 c.Redirect 或 c.HTML) 之前先保存 Session Cookie
+		if bw, ok := c.Res.(interface{ Before(func()) }); ok {
+			bw.Before(func() {
+				if sess.IsModified() {
+					_ = sess.Save()
+				}
+			})
+		}
+
 		c.Next()
 
 		if sess.IsModified() {
