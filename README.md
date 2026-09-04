@@ -67,6 +67,18 @@ Godeniter 采用 **100% 纯 Go 标准库（0 外部第三方依赖）** 设计�
 
 ---
 
+## ⚙️ 动态配置与外部配置文件 (0 依赖 JSON)
+
+Godeniter 坚持 **0 外部第三方库依赖**，推荐并内置基于 Go 原生 `encoding/json` 的分层动态配置体系（`config.json`）：
+* **Sidecar 伴随自生成**：首次打包为 `.exe` 或部署运行若无配置文件，自动在程序就近生成结构清晰、带注释字段的 `config.json` 模板。
+* **三层动态覆盖**：代码硬编码默认值 -> 本地 `config.json` -> 生产环境环境变量（`APP_PORT`, `DB_DSN` 等），优先级依次递增。
+* **数据库连接灵活切换**：开箱即用支持 SQLite3 单文件数据库与外部 MySQL/PostgreSQL 生产库平滑切换。
+* **客户机零门槛改配置**：交付给客户的单文件 `.exe` 无需重新编译，客户用记事本打开 `config.json` 即可随意更改端口与数据库。
+
+👉 详见专有手册：[**《动态配置与数据库连接手册 (docs/config.md)》**](./docs/config.md)
+
+---
+
 ## ⚡ 极速体验内置 Demo (一键启动运行)
 
 框架在 `examples/` 目录下内置了两种开箱即用的完整项目模式，克隆仓库后可直接在终端一键运行体验：
@@ -449,3 +461,7 @@ godeniter new my-web-project --template=mvc
   * [`examples/01_api_spa/`](./examples/01_api_spa/) - 模式一：前后端分离 RESTful API + SPA 单页 (带文件上传与分页) 完整 Demo
   * [`examples/02_mvc_template/`](./examples/02_mvc_template/) - 模式二：经典 PHP 风格服务端渲染 MVC + HTML Template (带头像上传与搜索) 完整 Demo
   * [`dist/`](./dist/) - 编译生成的跨平台单文件可执行程序输出目录
+* **核心文档与开发手册 (`docs/`)**：
+  * [`docs/offline.md`](./docs/offline.md) - 离线环境与受限网络开发/编译指南 (Zip 包即用与单文件交付)
+  * [`docs/config.md`](./docs/config.md) - 0 依赖动态配置 (`config.json`)、数据库连接与客户机端口修改手册
+  * [`docs/progress.md`](./docs/progress.md) - 框架开发进度、架构设计原则与版本演进记录

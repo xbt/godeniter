@@ -84,6 +84,7 @@
   - [x] 服务端会话管理手册 [`docs/session.md`](./session.md)
   - [x] 跨平台单文件打包手册 [`docs/build_and_deploy.md`](./build_and_deploy.md)
   - [x] 离线与受限网络开发指南 [`docs/offline.md`](./offline.md)
+  - [x] 动态配置与数据库连接手册 [`docs/config.md`](./config.md)
   - [x] 交互式 CodeIgniter 风格在线 HTML 控制台与用户手册 (`examples/01_api_spa/static/index.html`)
 
 ---
