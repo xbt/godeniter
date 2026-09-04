@@ -3,12 +3,14 @@ package daemon
 import (
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
+
 )
 
 const daemonWorkerEnv = "__GODENITER_DAEMON_WORKER__"
@@ -138,9 +140,20 @@ func (m *Manager) Start(addr string) error {
 	// 检查现有进程是否已经在运行中
 	if pid, ok := m.readPID(); ok && checkProcess(pid) {
 		fmt.Printf(">> [WARN] Godeniter 服务已经在后台运行中！(PID: %d)\n", pid)
-		fmt.Printf(">> [TIP] 可以执行状态检查或重启: 'status' 或 'restart'\n")
+		fmt.Printf(">> [TIP] 查看状态: go run main.go status (或 ./app status)\n")
+		fmt.Printf(">> [TIP] 平滑重启: go run main.go restart (或 ./app restart)\n")
 		return nil
 	}
+
+	// 1. 预检端口可用性，防止后台子进程静默因端口占用而失败
+	if addr != "" {
+		testLn, err := net.Listen("tcp", addr)
+		if err != nil {
+			return fmt.Errorf("端口 [%s] 已被占用，无法在后台启动服务！请执行 'lsof -ti %s | xargs kill -9' 释放端口，或在 config.json 中更换端口", addr, addr)
+		}
+		_ = testLn.Close()
+	}
+
 
 	// 准备日志文件目录
 	_ = os.MkdirAll(filepath.Dir(m.cfg.LogFile), 0755)
@@ -188,9 +201,12 @@ func (m *Manager) Start(addr string) error {
 		return fmt.Errorf("子进程启动后立即异常退出，请查看日志: %s", m.cfg.LogFile)
 	}
 
-	cmdName := filepath.Base(os.Args[0])
-	if strings.Contains(cmdName, "main") && strings.HasSuffix(os.Args[0], "main.go") {
-		cmdName = "go run main.go"
+	// 智能推测二进制名称
+	binName := filepath.Base(os.Args[0])
+	if strings.Contains(os.Args[0], "go-build") || binName == "main" {
+		binName = "./app"
+	} else if !strings.HasPrefix(binName, "./") && !strings.HasPrefix(binName, "/") {
+		binName = "./" + binName
 	}
 
 	fmt.Println("==========================================================")
@@ -199,14 +215,15 @@ func (m *Manager) Start(addr string) error {
 	fmt.Printf(" >> 监听端口:    %s\n", addr)
 	fmt.Printf(" >> 输出日志:    %s\n", m.cfg.LogFile)
 	fmt.Println("----------------------------------------------------------")
-	fmt.Printf(" >> 运维常用指令:\n")
-	fmt.Printf("    - 查看状态: %s status\n", cmdName)
-	fmt.Printf("    - 停止服务: %s stop\n", cmdName)
-	fmt.Printf("    - 重启服务: %s restart\n", cmdName)
-	fmt.Printf("    - 查看日志: tail -f %s\n", m.cfg.LogFile)
+	fmt.Printf(" >> 运维常用指令 (源码运行 / 二进制运行):\n")
+	fmt.Printf("    - 查看状态: go run main.go status  (或 %s status)\n", binName)
+	fmt.Printf("    - 停止服务: go run main.go stop    (或 %s stop)\n", binName)
+	fmt.Printf("    - 重启服务: go run main.go restart (或 %s restart)\n", binName)
+	fmt.Printf("    - 实时日志: tail -f %s\n", m.cfg.LogFile)
 	fmt.Println("==========================================================")
 
 	return nil
+
 }
 
 // Stop 优雅停止后台服务

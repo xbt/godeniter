@@ -47,14 +47,15 @@ $ go run main.go start
  >> 监听端口:    :8080
  >> 输出日志:    ./app.log
 ----------------------------------------------------------
- >> 运维常用指令:
-    - 查看状态: go run main.go status
-    - 停止服务: go run main.go stop
-    - 重启服务: go run main.go restart
-    - 查看日志: tail -f ./app.log
+ >> 运维常用指令 (源码运行 / 二进制运行):
+    - 查看状态: go run main.go status  (或 ./app status)
+    - 停止服务: go run main.go stop    (或 ./app stop)
+    - 重启服务: go run main.go restart (或 ./app restart)
+    - 实时日志: tail -f ./app.log
 ==========================================================
 $ 
 # 终端直接返回！关闭窗口、断开 SSH 完全不中断服务。
+
 ```
 
 ### 2. 查看服务状态与日志
