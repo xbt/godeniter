@@ -16,6 +16,7 @@ bin/
 *.sqlite
 *.sqlite3
 *.log
+*.pid
 
 # IDE and Editor configurations
 .idea/

@@ -76,6 +76,22 @@ Godeniter 坚持 **0 外部第三方库依赖**，推荐并内置基于 Go 原�
 
 ---
 
+## 🛡️ 服务生命周期与守护进程管理 (Daemon & Lifecycle)
+
+Godeniter 原生内置基于纯 Go 标准库的跨平台服务生命周期与守护进程管理器（`godeniter/daemon`）：
+* **双模自由切换**：默认无参数时为**前台开发调试模式**（输出彩色 Banner，随时 `Ctrl+C` 退出）；输入 `start` 或开启配置则自动进入**后台守护模式**（Setsid 自动脱离终端，输出 PID 并**立即返回命令行**，断开 SSH / 关闭终端持续运行）。
+* **类似 Nginx 的常用指令集**：
+  * `go run main.go start`（或 `./app start`）：后台静默启动服务，重定向日志至 `app.log`；
+  * `go run main.go status`（或 `./app status`）：查看当前服务运行状态、PID 与监听端口；
+  * `go run main.go stop`（或 `./app stop`）：向后台进程发送信号触发平滑优雅停机并清理 PID 文件；
+  * `go run main.go restart`（或 `./app restart`）：平滑重启服务。
+* **100% 跨平台兼容**：在 Linux/macOS 平台使用系统调用脱离终端会话；在 Windows 平台使用 `DETACHED_PROCESS` 剥离窗口，交叉编译零报错。
+
+👉 详见专有手册：[**《服务生命周期管理与守护进程运维手册 (docs/daemon.md)》**](./docs/daemon.md)
+
+
+---
+
 ## ⚡ 极速体验内置 Demo (一键启动运行)
 
 框架在 `examples/` 目录下内置了两种开箱即用的完整项目模式，克隆仓库后可直接在终端一键运行体验：
