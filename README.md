@@ -89,6 +89,55 @@ Godeniter 原生内置基于纯 Go 标准库的跨平台服务生命周期与守
 
 👉 详见专有手册：[**《服务生命周期管理与守护进程运维手册 (docs/daemon.md)》**](./docs/daemon.md)
 
+---
+
+## 🚀 跨平台系统托盘与桌面状态栏 (`tray/`)
+
+Godeniter 原生内置跨平台桌面系统托盘与状态栏常驻客户端模式（`godeniter/tray`），满足将 Web 服务分发为独立桌面客户端的场景：
+* **跨平台原生桌面交互**：
+  * **macOS**：在屏幕右上角菜单栏常驻小图标，点击展开原生下拉菜单；
+  * **Windows**：在屏幕右下角通知区域常驻托盘图标，支持右键原生菜单与双击快捷打开；
+  * **Linux / 无头环境**：自动平滑降级为命令行信号监听模式。
+* **开箱即用经典菜单体系**：
+  * 🌐 **打开管理后台**：自动调起系统默认浏览器访问 Web 页面；
+  * 📁 **打开应用目录**：直接调起系统文件管理器（Windows 资源管理器 / Mac Finder）定位到应用目录，方便用户寻找 `config.json`、`app.log` 或 SQLite 数据文件；
+  * ℹ️ **关于系统**：弹窗展示当前系统版本、进程 PID、端口与运行环境；
+  * ──────────────────（原生视觉分割线）
+  * ⏹️ **退出程序**：平滑停机并安全退出进程；
+  * 🧩 **自由扩展**：可通过 `Menus` 传入任意数量自定义功能菜单项。
+* **贯彻 0 第三方依赖理念**：
+  * Windows 端使用 **100% 纯 Go 标准库 `syscall`** 动态链接 Win32 原生 API，**无任何 CGO 依赖**，Mac 交叉编译 Windows `.exe` 畅通无阻！
+  * macOS 端直接对接系统出厂内置的 Cocoa 框架，无需安装任何外部环境。
+
+### 托盘模式快速调用示例：
+
+```go
+package main
+
+import (
+    "github.com/xbt/godeniter"
+    "github.com/xbt/godeniter/tray"
+)
+
+func main() {
+    app := godeniter.Classic()
+    app.Get("/", func(c *godeniter.Context) {
+        c.String(200, "Hello Godeniter Desktop!")
+    })
+
+    // 在后台协程启动 Web 监听
+    go app.Run(":8080")
+
+    // 在主线程启动跨平台原生系统托盘
+    _ = tray.Run(tray.Options{
+        Title:   "Godeniter Desktop",
+        Tooltip: "Godeniter 桌面客户端",
+        URL:     "http://127.0.0.1:8080",
+        Version: "v1.0.0",
+        Port:    ":8080",
+    })
+}
+```
 
 ---
 
@@ -543,6 +592,8 @@ Godeniter 基于 **100% 纯 Go 标准库与 `embed.FS`** 设计，天然具备�
   * [`session/`](./session/) - 服务端会话管理与安全签名 CookieStore
   * [`binding/`](./binding/) - 请求参数绑定与基于 Struct Tag 的轻量验证器
   * [`middleware/`](./middleware/) - 内置中间件（Logger、Recovery、CORS）
+  * [`daemon/`](./daemon/) - 跨平台服务生命周期与守护进程管理器（start/stop/restart/status）
+  * [`tray/`](./tray/) - 跨平台系统托盘与状态栏常驻客户端模式（macOS/Windows/Linux 0 依赖）
 * **通用工具集 (`utils/`)**：
   * [`utils/str/`](./utils/str/) - 字符串处理、脱敏、哈希与随机生成
   * [`utils/upload/`](./utils/upload/) - 文件上传安全处理类与存储校验器
