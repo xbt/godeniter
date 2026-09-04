@@ -54,3 +54,22 @@ func TestCookieStore_SaveAndLoad(t *testing.T) {
 		t.Errorf("被篡改的 Cookie 应当校验失败")
 	}
 }
+
+func TestSession_FlashData(t *testing.T) {
+	sess := NewSession(nil, nil, "flash_test")
+
+	// 设置 Flash 消息
+	sess.SetFlash("notice", "文章创建成功")
+
+	// 第一次读取：应该正常获取
+	msg := sess.GetFlashString("notice")
+	if msg != "文章创建成功" {
+		t.Errorf("期望获取到 Flash 消息 '文章创建成功'，实际获取: %s", msg)
+	}
+
+	// 第二次读取：应该已被自动销毁，返回空
+	msgSecond := sess.GetFlashString("notice")
+	if msgSecond != "" {
+		t.Errorf("Flash 消息读取后应当自动销毁，但仍获取到: %s", msgSecond)
+	}
+}

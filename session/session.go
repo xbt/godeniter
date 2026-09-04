@@ -21,6 +21,13 @@ type Session interface {
 	Delete(key string)
 	// Clear 清空所有会话数据
 	Clear()
+	// SetFlash 设置一次性闪存消息 (FlashData)，类似 CodeIgniter $this->session->set_flashdata()
+	// 存储的数据在下一次被读取 (GetFlash) 后自动销毁，非常适合表单提交后的重定向提示
+	SetFlash(key string, val any)
+	// GetFlash 读取并销毁指定的一次性闪存消息
+	GetFlash(key string) any
+	// GetFlashString 读取并销毁指定的一次性闪存消息字符串
+	GetFlashString(key string) string
 	// Save 将会话数据序列化并保存（写回 Cookie / 存储器）
 	Save() error
 	// IsModified 检查会话是否被修改过
@@ -108,6 +115,30 @@ func (s *DefaultSession) Clear() {
 	defer s.mu.Unlock()
 	s.values = make(map[string]any)
 	s.modified = true
+}
+
+func (s *DefaultSession) SetFlash(key string, val any) {
+	s.Set("_flash_"+key, val)
+}
+
+func (s *DefaultSession) GetFlash(key string) any {
+	flashKey := "_flash_" + key
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	val, ok := s.values[flashKey]
+	if ok {
+		delete(s.values, flashKey)
+		s.modified = true
+	}
+	return val
+}
+
+func (s *DefaultSession) GetFlashString(key string) string {
+	val := s.GetFlash(key)
+	if str, ok := val.(string); ok {
+		return str
+	}
+	return ""
 }
 
 func (s *DefaultSession) IsModified() bool {

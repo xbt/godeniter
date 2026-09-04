@@ -47,7 +47,11 @@
   - [x] 基于 HMAC-SHA256 安全签名的防篡改 `CookieStore`
   - [x] `godeniter.Session` 全自动装配中间件
   - [x] Context 与 Injector 深度集成 (`c.Session()`, `func(sess session.Session)`)
+  - [x] CodeIgniter 风格一次性闪存消息 (`SetFlash`, `GetFlash`, `GetFlashString`)
   - [x] 100% 单元测试覆盖 (`session/session_test.go`)
+- [x] **生产级平滑优雅停机与 Context 默认值增强**
+  - [x] `app.Run` 内置监听系统信号 (`SIGINT`, `SIGTERM`)，支持平滑退出 (Graceful Shutdown)
+  - [x] `Context` 便捷默认值读取 (`DefaultQuery`, `DefaultPostForm`, `QueryInt`)
 - [x] **通用工具集模块 (`utils/`)**
   - [x] `utils/str/`：字符串随机串、UUID、命名转换、UTF-8 截断、脱敏、哈希与 XSS 过滤
   - [x] `utils/upload/`：文件上传大小/扩展名白名单校验、安全重命名与自动归档
@@ -55,7 +59,8 @@
 - [x] **官方独立脚手架工程 ([`godeniter-starter`](../godeniter-starter))**
   - [x] 在 `godeniter` 同级创建独立的脚手架项目
   - [x] 规范的 MVC + RESTful API 分层目录骨架（`config/`, `app/controllers/`, `app/models/`, `app/services/`, `app/middleware/`, `views/`）
-  - [x] 模块依赖配置 (`go.mod` 自动指向 `replace godeniter => ../godeniter`)
+  - [x] 配置支持从系统环境变量动态覆盖 (`PORT`, `APP_ENV`, `UPLOAD_DIR`, `SESSION_KEY`)
+  - [x] 模块依赖配置 (`go.mod` 自动指向 `replace github.com/xbt/godeniter => ../godeniter`)
   - [x] 跨平台单文件打包流水线 (`build.sh`, `build.bat` 输出 `dist/app.exe`)
   - [x] 完整的上手文档 [`README.md`](../godeniter-starter/README.md)
 - [x] **官方 CLI 脚手架工具 (`cmd/godeniter/`)**

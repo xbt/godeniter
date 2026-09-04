@@ -134,9 +134,11 @@ func main() {
         c.JSON(http.StatusOK, godeniter.H{"message": "pong"})
     })
 
-    // 3. 动态路由参数
-    app.Get("/users/:id", func(params router.Params) (int, godeniter.H) {
-        return 200, godeniter.H{"user_id": params.Get("id")}
+    // 3. 动态路由参数与 Query 默认值解析
+    app.Get("/users/:id", func(c *godeniter.Context) {
+        userID := c.Param("id")
+        page := c.QueryInt("page", 1) // 获取 ?page=2，未传或非法自动取默认值 1
+        c.JSON(200, godeniter.H{"user_id": userID, "page": page})
     })
 
     // 4. 路由分组
@@ -147,7 +149,7 @@ func main() {
         })
     }
 
-    // 5. 启动服务 (终端自动打印访问链接)
+    // 5. 启动服务 (终端自动打印访问链接，内置平滑优雅停机 Graceful Shutdown)
     app.Run(":8080")
 }
 ```
@@ -394,12 +396,14 @@ func main() {
     app.Post("/login", func(c *godeniter.Context, sess session.Session) {
         sess.Set("user_id", 1001)
         sess.Set("username", "ben")
+        sess.SetFlash("notice", "🎉 欢迎回来，登录成功！") // CodeIgniter 风格闪存消息，读取后自动销毁
         c.Redirect(302, "/dashboard")
     })
 
     app.Get("/dashboard", func(c *godeniter.Context, sess session.Session) {
         username := sess.GetString("username")
-        c.String(200, "欢迎回来: " + username)
+        notice := sess.GetFlashString("notice") // 仅在本次请求有效
+        c.String(200, "欢迎回来: %s, 提示: %s", username, notice)
     })
 }
 ```

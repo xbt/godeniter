@@ -2,6 +2,7 @@
 package godeniter
 
 import (
+	"context"
 	"fmt"
 	"github.com/xbt/godeniter/inject"
 	"github.com/xbt/godeniter/router"
@@ -11,10 +12,13 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
+	"os/signal"
 	"path"
 	"reflect"
 	"runtime"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -222,8 +226,8 @@ func (engine *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	c.Next()
 }
 
-// Run 启动 HTTP 监听服务，并在控制台输出友好的访问地址。
-// 特别适合打包为 Windows 可执行文件后，客户双击直接看到访问链接。
+// Run 启动 HTTP 监听服务（内置系统中断信号监听与平滑优雅退出 Graceful Shutdown）。
+// 特别适合打包为 Windows 可执行文件后，客户双击直接看到访问链接；收到 Ctrl+C 时等待在途请求处理完毕后再安全退出。
 func (engine *Engine) Run(addr ...string) error {
 	listenAddr := ":8080"
 	if len(addr) > 0 && addr[0] != "" {
@@ -231,7 +235,37 @@ func (engine *Engine) Run(addr ...string) error {
 	}
 
 	printBanner(listenAddr)
-	return http.ListenAndServe(listenAddr, engine)
+
+	srv := &http.Server{
+		Addr:    listenAddr,
+		Handler: engine,
+	}
+
+	// 监听中断信号 (Ctrl+C 与 kill 信号)
+	stopChan := make(chan os.Signal, 1)
+	signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM)
+
+	serverErr := make(chan error, 1)
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			serverErr <- err
+		}
+	}()
+
+	select {
+	case err := <-serverErr:
+		return err
+	case sig := <-stopChan:
+		fmt.Printf("\n >> 接收到终止信号 [%s]，正在平滑关闭服务 (Graceful Shutdown)...\n", sig)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := srv.Shutdown(ctx); err != nil {
+			fmt.Printf(" >> 强制关闭服务异常: %v\n", err)
+			return err
+		}
+		fmt.Println(" >> 服务已成功安全停止。")
+		return nil
+	}
 }
 
 // printBanner 打印服务启动横幅与本地/局域网访问地址。

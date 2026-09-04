@@ -6,24 +6,56 @@ Godeniter 内置了类似 **PHP CodeIgniter 3** 的链式查询构造器（Query
 
 ## 1. 快速入门与连接池
 
+Godeniter 底层基于 Go 原生 `database/sql`，支持任意标准 SQL 驱动。
+
+### (1) SQLite 极速单文件接入 (推荐单文件交付场景，纯 Go 无需 CGO)
+
+如果目标是 Windows 客户端单文件双击运行，推荐使用 `modernc.org/sqlite`（纯 Go 移植，跨平台交叉编译无需任何 gcc 环境）：
+
+```bash
+go get modernc.org/sqlite
+```
+
+在代码中连接：
 ```go
 package main
 
 import (
     "github.com/xbt/godeniter/db"
-    _ "github.com/go-sql-driver/mysql" // 或 _ "modernc.org/sqlite"
+    _ "modernc.org/sqlite" // 纯 Go SQLite 驱动，无 CGO 依赖
 )
 
 func main() {
-    // 初始化连接池
-    database, err := db.Open("mysql", "root:password@tcp(127.0.0.1:3306)/my_db?charset=utf8mb4&parseTime=True")
+    // 打开本地单文件数据库 (自动建库)
+    database, err := db.Open("sqlite", "./app.db")
     if err != nil {
         panic(err)
     }
 
-    // 设置连接池参数 (标准库原生支持)
-    database.SetMaxOpenConns(50)
-    database.SetMaxIdleConns(10)
+    // 设置最大连接数 (SQLite 建议单写连接以避免锁竞争)
+    database.SetMaxOpenConns(1)
+}
+```
+
+### (2) MySQL 生产连接池配置
+
+```go
+package main
+
+import (
+    "github.com/xbt/godeniter/db"
+    _ "github.com/go-sql-driver/mysql"
+)
+
+func main() {
+    dsn := "root:password@tcp(127.0.0.1:3306)/my_db?charset=utf8mb4&parseTime=True"
+    database, err := db.Open("mysql", dsn)
+    if err != nil {
+        panic(err)
+    }
+
+    database.SetMaxOpenConns(50)  // 最大打开连接数
+    database.SetMaxIdleConns(10)  // 最大空闲连接数
 }
 ```
 

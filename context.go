@@ -12,6 +12,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"reflect"
+	"strconv"
 )
 
 // abortIndex 定义中断中间件链的最大索引偏移。
@@ -213,6 +214,18 @@ func (c *Context) DefaultPostForm(key string, defaultValue string) string {
 		return defaultValue
 	}
 	return val
+}
+
+// QueryInt 获取整型 URL Query 参数；若不存在或解析失败则返回默认值 defaultValue。
+func (c *Context) QueryInt(key string, defaultValue int) int {
+	val := c.Query(key)
+	if val == "" {
+		return defaultValue
+	}
+	if n, err := strconv.Atoi(val); err == nil {
+		return n
+	}
+	return defaultValue
 }
 
 // BindJSON 解析请求体 JSON 并映射到目标结构体。

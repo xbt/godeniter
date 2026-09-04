@@ -113,3 +113,45 @@ admin := app.Group("/admin", AuthRequired())
     admin.Get("/dashboard", dashboardHandler)
 }
 ```
+
+---
+
+## 5. 自定义 404 页面与未命中处理
+
+当请求的路径未匹配到任何路由规则时，默认返回纯文本 404。可通过覆盖 `app.NotFound` 自定义返回 JSON 格式或渲染友好 HTML 页面：
+
+```go
+// 1. API 模式返回统一业务 JSON
+app.NotFound = func(c *godeniter.Context) {
+    c.Fail(40400, fmt.Sprintf("路由 [%s %s] 不存在", c.Method, c.Path))
+}
+
+// 2. 或渲染友好的 404 HTML 模板
+app.NotFound = func(c *godeniter.Context) {
+    c.HTML(404, "404.html", godeniter.H{
+        "Title": "页面走丢了",
+    })
+}
+```
+
+---
+
+## 6. 参数获取与默认值提取
+
+除了通过 `c.Param("id")` 获取路径变量外，还提供了带 fallback 默认值的安全提取方法：
+
+```go
+// 1. 获取 URL Query 参数 (若未传则返回默认值)
+keyword := c.DefaultQuery("keyword", "默认搜索词")
+page := c.QueryInt("page", 1)           // 自动转为 int，若无效或未传返回 1
+
+// 2. 获取 POST 表单数据 (若未传则返回默认值)
+role := c.DefaultPostForm("role", "guest")
+```
+
+---
+
+## 7. 生产级平滑优雅退出 (Graceful Shutdown)
+
+`app.Run(":8080")` 内部已内置监听操作系统终止信号（`os.Interrupt`、`syscall.SIGTERM`）。
+当在控制台按下 `Ctrl+C` 或运维执行 `kill` 时，服务不会瞬间截断网络连接，而是给予最多 5 秒超时，等待正在执行的文件上传、数据库事务处理完毕后再安全退出。
