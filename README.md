@@ -38,7 +38,7 @@ import (
 )
 ```
 
-### 方式二：使用官方开箱即用脚手架项目 ([`godeniter-starter`](https://github.com/xbt/godeniter/tree/main/../godeniter-starter))
+### 方式二：使用官方开箱即用脚手架项目 ([`godeniter-starter`](https://github.com/xbt/godeniter-starter))
 
 我们提供了预先搭建好标准分层结构（配置、控制器、模型、业务层、中间件、视图与一键打包脚本）的独立模板工程：
 
@@ -53,6 +53,17 @@ go run main.go
 # 一键编译为 Windows 独立单文件 .exe
 ./build.sh
 ```
+
+---
+
+## 📴 离线与受限网络开发支持 (Zip 包即用)
+
+Godeniter 采用 **100% 纯 Go 标准库（0 外部第三方依赖）** 设计。在**内网断网或受限网络**环境下，无需拉取任何外部 Go 模块：
+* **Zip 源码包即用**：解压即可直接 `go run` 运行 Demo。
+* **本地路径引用 (`replace`)**：支持在 `go.mod` 中通过 `replace` 直接读取本地源码。
+* **终极离线交付**：一键打包为 Windows 单文件 `.exe`，免安装 Go 环境与网络，双击直接运行。
+
+👉 详见专有手册：[**《离线环境与受限网络开发指南 (docs/offline.md)》**](./docs/offline.md)
 
 ---
 
