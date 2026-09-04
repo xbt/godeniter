@@ -558,3 +558,10 @@ Godeniter 基于 **100% 纯 Go 标准库与 `embed.FS`** 设计，天然具备�
   * [`docs/build_and_deploy.md`](./docs/build_and_deploy.md) - 跨平台单文件打包与 Windows 客户机交付手册
   * [`docs/offline.md`](./docs/offline.md) - 离线环境与受限网络开发/编译指南 (Zip 包即用与单文件交付)
   * [`docs/progress.md`](./docs/progress.md) - 框架开发进度、架构设计原则与版本演进记录
+
+---
+
+## 📄 开源许可证 (License)
+
+Godeniter 核心框架基于 **[GNU General Public License v3.0 (GPL-3.0)](./LICENSE)** 协议开源。
+
