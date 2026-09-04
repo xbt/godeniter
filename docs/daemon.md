@@ -39,34 +39,46 @@ Godeniter 坚持 **100% 纯 Go 标准库（0 外部第三方依赖）** 设计�
 
 ### 1. 后台启动服务
 ```bash
-$ go run main.go start
+$ go run main.go start  # 或执行二进制 ./dist/app start
 >> [CONFIG] 成功从本地加载配置文件: config.json
 ==========================================================
  >> Godeniter 2.0 服务已成功在后台启动 (Daemon Mode)!
  >> 进程 PID:    81547 (已写入 ./app.pid)
  >> 监听端口:    :8080
+ >> 本地访问:    http://127.0.0.1:8080 (或 http://localhost:8080)
+ >> 局域网访问:  http://192.168.1.100:8080
  >> 输出日志:    ./app.log
 ----------------------------------------------------------
- >> 运维常用指令 (源码运行 / 二进制运行):
-    - 查看状态: go run main.go status  (或 ./app status)
-    - 停止服务: go run main.go stop    (或 ./app stop)
-    - 重启服务: go run main.go restart (或 ./app restart)
-    - 实时日志: tail -f ./app.log
+ >> 运维常用指令:
+    - 启动服务:    go run main.go start
+    - 查看状态:    go run main.go status
+    - 重启服务:    go run main.go restart
+    - 停止服务:    go run main.go stop
+    - 实时查看日志: tail -f ./app.log
 ==========================================================
 $ 
 # 终端直接返回！关闭窗口、断开 SSH 完全不中断服务。
-
 ```
 
 ### 2. 查看服务状态与日志
 ```bash
-# 查看状态
+# 查看状态 (智能打印运行 PID、监听端口与访问地址)
 $ go run main.go status
 ==========================================================
  >> Godeniter 服务状态: [运行中 🟢]
- >> 运行 PID:    81547
+ >> 运行 PID:    81547 (存活)
+ >> 监听端口:    :8080
+ >> 本地访问:    http://127.0.0.1:8080 (或 http://localhost:8080)
+ >> 局域网访问:  http://192.168.1.100:8080
  >> PID 文件:    ./app.pid
  >> 日志文件:    ./app.log
+----------------------------------------------------------
+ >> 运维常用指令:
+    - 启动服务:    go run main.go start
+    - 查看状态:    go run main.go status
+    - 重启服务:    go run main.go restart
+    - 停止服务:    go run main.go stop
+    - 实时查看日志: tail -f ./app.log
 ==========================================================
 
 # 实时追踪日志 (动态滚屏，按 Ctrl+C 仅退出查看，不影响服务)
@@ -81,20 +93,36 @@ $ go run main.go restart
 >> [RESTART] 正在平滑重启服务...
 >> [STOP] 正在向服务发送安全退出信号 (PID: 81547)...
 >> [STOP] Godeniter 服务已安全优雅退出！
+>> [TIP] 如需重新启动服务，请执行: go run main.go start
 ==========================================================
  >> Godeniter 2.0 服务已成功在后台启动 (Daemon Mode)!
  >> 进程 PID:    81580 (已写入 ./app.pid)
- ...
+ >> 监听端口:    :8080
+ >> 本地访问:    http://127.0.0.1:8080 (或 http://localhost:8080)
+ >> 局域网访问:  http://192.168.1.100:8080
+ >> 输出日志:    ./app.log
+----------------------------------------------------------
+ >> 运维常用指令:
+    - 启动服务:    go run main.go start
+    - 查看状态:    go run main.go status
+    - 重启服务:    go run main.go restart
+    - 停止服务:    go run main.go stop
+    - 实时查看日志: tail -f ./app.log
+==========================================================
 
 # 停止服务
 $ go run main.go stop
 >> [CONFIG] 成功从本地加载配置文件: config.json
 >> [STOP] 正在向服务发送安全退出信号 (PID: 81580)...
 >> [STOP] Godeniter 服务已安全优雅退出！
+>> [TIP] 如需重新启动服务，请执行: go run main.go start
 
 # 再次查看确认
 $ go run main.go status
->> [STATUS] Godeniter 服务状态: [未运行] (PID 文件不存在)
+==========================================================
+ >> Godeniter 服务状态: [未运行 ⚪] (PID 文件不存在)
+ >> 启动指令:    go run main.go start
+==========================================================
 ```
 
 ---

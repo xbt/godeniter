@@ -106,7 +106,7 @@ func Run(app Runner, addr string, cfgs ...Config) error {
 		os.Exit(0)
 		return nil
 	case "status":
-		m.Status()
+		m.Status(addr)
 		os.Exit(0)
 		return nil
 	default:
@@ -139,9 +139,11 @@ func (m *Manager) runWorker(app Runner, addr string) error {
 func (m *Manager) Start(addr string) error {
 	// 检查现有进程是否已经在运行中
 	if pid, ok := m.readPID(); ok && checkProcess(pid) {
-		fmt.Printf(">> [WARN] Godeniter 服务已经在后台运行中！(PID: %d)\n", pid)
-		fmt.Printf(">> [TIP] 查看状态: go run main.go status (或 ./app status)\n")
-		fmt.Printf(">> [TIP] 平滑重启: go run main.go restart (或 ./app restart)\n")
+		fmt.Println("==========================================================")
+		fmt.Printf(" >> [WARN] Godeniter 服务已经在后台运行中！(PID: %d)\n", pid)
+		fmt.Printf(" >> 监听端口:    %s\n", addr)
+		printServerURLs(addr)
+		printOpsCommands(m.cfg.LogFile)
 		return nil
 	}
 
@@ -153,7 +155,6 @@ func (m *Manager) Start(addr string) error {
 		}
 		_ = testLn.Close()
 	}
-
 
 	// 准备日志文件目录
 	_ = os.MkdirAll(filepath.Dir(m.cfg.LogFile), 0755)
@@ -201,42 +202,31 @@ func (m *Manager) Start(addr string) error {
 		return fmt.Errorf("子进程启动后立即异常退出，请查看日志: %s", m.cfg.LogFile)
 	}
 
-	// 智能推测二进制名称
-	binName := filepath.Base(os.Args[0])
-	if strings.Contains(os.Args[0], "go-build") || binName == "main" {
-		binName = "./app"
-	} else if !strings.HasPrefix(binName, "./") && !strings.HasPrefix(binName, "/") {
-		binName = "./" + binName
-	}
-
 	fmt.Println("==========================================================")
 	fmt.Printf(" >> Godeniter 2.0 服务已成功在后台启动 (Daemon Mode)!\n")
 	fmt.Printf(" >> 进程 PID:    %d (已写入 %s)\n", pid, m.cfg.PIDFile)
 	fmt.Printf(" >> 监听端口:    %s\n", addr)
+	printServerURLs(addr)
 	fmt.Printf(" >> 输出日志:    %s\n", m.cfg.LogFile)
-	fmt.Println("----------------------------------------------------------")
-	fmt.Printf(" >> 运维常用指令 (源码运行 / 二进制运行):\n")
-	fmt.Printf("    - 查看状态: go run main.go status  (或 %s status)\n", binName)
-	fmt.Printf("    - 停止服务: go run main.go stop    (或 %s stop)\n", binName)
-	fmt.Printf("    - 重启服务: go run main.go restart (或 %s restart)\n", binName)
-	fmt.Printf("    - 实时日志: tail -f %s\n", m.cfg.LogFile)
-	fmt.Println("==========================================================")
+	printOpsCommands(m.cfg.LogFile)
 
 	return nil
-
 }
 
 // Stop 优雅停止后台服务
 func (m *Manager) Stop() error {
+	cmd := getExecCommand()
 	pid, ok := m.readPID()
 	if !ok {
 		fmt.Printf(">> [STATUS] 服务未运行 (未检测到 PID 文件: %s)\n", m.cfg.PIDFile)
+		fmt.Printf(">> [TIP] 启动服务指令: %s start\n", cmd)
 		return nil
 	}
 
 	if !checkProcess(pid) {
 		_ = os.Remove(m.cfg.PIDFile)
 		fmt.Printf(">> [STATUS] 目标进程 (PID: %d) 已不存在，已自动清理失效的 PID 文件。\n", pid)
+		fmt.Printf(">> [TIP] 启动服务指令: %s start\n", cmd)
 		return nil
 	}
 
@@ -251,6 +241,7 @@ func (m *Manager) Stop() error {
 		if !checkProcess(pid) {
 			_ = os.Remove(m.cfg.PIDFile)
 			fmt.Printf(">> [STOP] Godeniter 服务已安全优雅退出！\n")
+			fmt.Printf(">> [TIP] 如需重新启动服务，请执行: %s start\n", cmd)
 			return nil
 		}
 	}
@@ -259,6 +250,7 @@ func (m *Manager) Stop() error {
 	_ = forceKillProcess(pid)
 	_ = os.Remove(m.cfg.PIDFile)
 	fmt.Printf(">> [WARN] 服务在超时时间内未自行退出，已执行终结。\n")
+	fmt.Printf(">> [TIP] 如需重新启动服务，请执行: %s start\n", cmd)
 	return nil
 }
 
@@ -271,26 +263,129 @@ func (m *Manager) Restart(addr string) error {
 }
 
 // Status 检查当前服务运行状态
-func (m *Manager) Status() {
+func (m *Manager) Status(addr ...string) {
+	listenAddr := ":8080"
+	if len(addr) > 0 && addr[0] != "" {
+		listenAddr = addr[0]
+	}
+
+	cmd := getExecCommand()
 	pid, ok := m.readPID()
 	if !ok {
-		fmt.Printf(">> [STATUS] Godeniter 服务状态: [未运行] (PID 文件不存在)\n")
+		fmt.Println("==========================================================")
+		fmt.Printf(" >> Godeniter 服务状态: [未运行 ⚪] (PID 文件不存在)\n")
+		fmt.Printf(" >> 启动指令:    %s start\n", cmd)
+		fmt.Println("==========================================================")
 		return
 	}
 
 	if !checkProcess(pid) {
 		_ = os.Remove(m.cfg.PIDFile)
-		fmt.Printf(">> [STATUS] Godeniter 服务状态: [已停止] (残留 PID 文件已自动清理)\n")
+		fmt.Println("==========================================================")
+		fmt.Printf(" >> Godeniter 服务状态: [已停止 ⚪] (残留 PID 文件已自动清理)\n")
+		fmt.Printf(" >> 启动指令:    %s start\n", cmd)
+		fmt.Println("==========================================================")
 		return
 	}
 
 	fmt.Printf("==========================================================\n")
 	fmt.Printf(" >> Godeniter 服务状态: [运行中 🟢]\n")
-	fmt.Printf(" >> 运行 PID:    %d\n", pid)
+	fmt.Printf(" >> 运行 PID:    %d (存活)\n", pid)
+	fmt.Printf(" >> 监听端口:    %s\n", listenAddr)
+	printServerURLs(listenAddr)
 	fmt.Printf(" >> PID 文件:    %s\n", m.cfg.PIDFile)
 	fmt.Printf(" >> 日志文件:    %s\n", m.cfg.LogFile)
-	fmt.Printf("==========================================================\n")
+	printOpsCommands(m.cfg.LogFile)
 }
+
+// getExecCommand 智能解析当前执行的命令原型（源码开发模式或二进制调用路径）
+func getExecCommand() string {
+	arg0 := os.Args[0]
+	base := filepath.Base(arg0)
+
+	// 判断是否为 go run 临时执行环境
+	if strings.Contains(arg0, "go-build") || strings.Contains(arg0, "go-cache") || strings.Contains(arg0, "/b001/exe/") || base == "main" || base == "main.exe" {
+		if _, err := os.Stat("main.go"); err == nil {
+			return "go run main.go"
+		}
+	}
+
+	// 二进制方式运行
+	// 如果是相对路径，确保带上 ./ 前缀以防直接复制报 command not found
+	if !filepath.IsAbs(arg0) {
+		if !strings.HasPrefix(arg0, "."+string(filepath.Separator)) && !strings.HasPrefix(arg0, "./") {
+			return "./" + arg0
+		}
+		return arg0
+	}
+
+	// 如果传入的是绝对路径，若在当前工作目录下，转换为更简洁直观的相对路径
+	if wd, err := os.Getwd(); err == nil {
+		if rel, err := filepath.Rel(wd, arg0); err == nil && !strings.HasPrefix(rel, "..") {
+			if !strings.HasPrefix(rel, "."+string(filepath.Separator)) && !strings.HasPrefix(rel, "./") {
+				return "./" + rel
+			}
+			return rel
+		}
+	}
+
+	return arg0
+}
+
+// parsePort 从监听地址中解析纯端口号
+func parsePort(addr string) string {
+	if addr == "" {
+		return "8080"
+	}
+	if strings.HasPrefix(addr, ":") {
+		return addr[1:]
+	}
+	if parts := strings.Split(addr, ":"); len(parts) >= 2 {
+		return parts[len(parts)-1]
+	}
+	return addr
+}
+
+// getLocalIP 获取本机局域网 IPv4 地址
+func getLocalIP() string {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return ""
+	}
+	for _, address := range addrs {
+		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				return ipnet.IP.String()
+			}
+		}
+	}
+	return ""
+}
+
+// printServerURLs 打印本地与局域网访问地址
+func printServerURLs(addr string) {
+	port := parsePort(addr)
+	fmt.Printf(" >> 本地访问:    http://127.0.0.1:%s (或 http://localhost:%s)\n", port, port)
+	if ip := getLocalIP(); ip != "" && ip != "127.0.0.1" {
+		fmt.Printf(" >> 局域网访问:  http://%s:%s\n", ip, port)
+	}
+}
+
+// printOpsCommands 输出完整运维常用指令集 (包括启动、停止、重启、状态、日志)
+func printOpsCommands(logFile string) {
+	cmd := getExecCommand()
+	fmt.Println("----------------------------------------------------------")
+	fmt.Printf(" >> 运维常用指令:\n")
+	fmt.Printf("    - 启动服务:    %s start\n", cmd)
+	fmt.Printf("    - 查看状态:    %s status\n", cmd)
+	fmt.Printf("    - 重启服务:    %s restart\n", cmd)
+	fmt.Printf("    - 停止服务:    %s stop\n", cmd)
+	if logFile != "" {
+		fmt.Printf("    - 实时查看日志: tail -f %s\n", logFile)
+	}
+	fmt.Println("==========================================================")
+}
+
 
 // readPID 读取 PID 文件中的数值
 func (m *Manager) readPID() (int, bool) {

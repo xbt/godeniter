@@ -93,3 +93,21 @@ func TestRunWorker(t *testing.T) {
 		t.Errorf("runWorker defer 预期清理 PID 文件")
 	}
 }
+
+func TestParsePortAndExecCommand(t *testing.T) {
+	if parsePort(":8080") != "8080" {
+		t.Errorf("parsePort(:8080) 失败")
+	}
+	if parsePort("127.0.0.1:9000") != "9000" {
+		t.Errorf("parsePort(127.0.0.1:9000) 失败")
+	}
+	if parsePort("") != "8080" {
+		t.Errorf("parsePort空值默认失败")
+	}
+
+	cmd := getExecCommand()
+	if cmd == "" {
+		t.Errorf("getExecCommand 不应返回空字符串")
+	}
+}
+
