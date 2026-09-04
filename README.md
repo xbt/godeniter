@@ -107,7 +107,7 @@ go run ./examples/02_mvc_template/main.go
   go run ./examples/01_api_spa/main.go
   ```
 
-### 2. [模式二：经典 PHP 风格服务端渲染 (MVC + HTML Template) 方案](./examples/02_mvc_template/)
+### 2. [模式二：经典 PHP 风格服务端渲染 (MVC + HTML Template 套页面) 方案](./examples/02_mvc_template/)
 * **适用场景**：企业内部进销存 ERP、WMS 客户端、SEO 友好的官网或内容管理系统。
 * **包含特性**：
   * 经典的 MVC 目录分层（`controllers/`, `models/`, `views/`）
@@ -117,19 +117,6 @@ go run ./examples/02_mvc_template/main.go
 * **快速运行命令**：
   ```bash
   go run ./examples/02_mvc_template/main.go
-  ```
-
-### 3. [模式三：MySQL 数据库增删改查实战 (RESTful CRUD + 连接池 + 事务) 方案](./examples/03_mysql_crud/)
-* **适用场景**：基于关系型数据库 MySQL 生产环境的业务系统、文章/商品数据中台。
-* **包含特性**：
-  * 真实 MySQL 连接池调优与连通性自检（`Ping`）
-  * 实体模型与数据库字段映射（`db:"tag"`）
-  * 纯标准库 ActiveRecord 链式查询构造器（`Where`, `Like`, `OrderBy`）
-  * 一键分页查询助手（`Paginate`）自动计算总数与分页元数据
-  * 数据表新增、批量插入、详情自增浏览量、逻辑软删除与 ACID 事务保护（`Transaction`）
-* **快速运行命令**：
-  ```bash
-  cd ./examples/03_mysql_crud && go run main.go
   ```
 
 ---
@@ -302,7 +289,7 @@ err := database.Transaction(func(tx *db.Tx) error {
 })
 ```
 
-👉 详见专有手册：[**《数据库与 ActiveRecord 开发手册 (docs/database.md)》**](./docs/database.md)（含完整 MySQL 表设计 DDL、全套 CRUD 及 RESTful 实战范例）
+👉 详见专有手册：[**《数据库与 ActiveRecord 开发手册 (docs/database.md)》**](./docs/database.md) 与 [**MySQL 实战演示工程 (`examples/database_mysql/`)**](./examples/database_mysql/)（含完整 MySQL 表设计 DDL、全套 CRUD、分页、事务与交互式控制台）
 
 ---
 
@@ -523,9 +510,9 @@ Godeniter 基于 **100% 纯 Go 标准库与 `embed.FS`** 设计，天然具备�
   * [`utils/upload/`](./utils/upload/) - 文件上传安全处理类与存储校验器
 * **命令行与开箱即用示例**：
   * [`cmd/godeniter/`](./cmd/godeniter/) - 官方 CLI 脚手架工具 (`godeniter new`)
-  * [`examples/01_api_spa/`](./examples/01_api_spa/) - 模式一：前后端分离 RESTful API + SPA 单页 (带文件上传与分页) 完整 Demo
-  * [`examples/02_mvc_template/`](./examples/02_mvc_template/) - 模式二：经典 PHP 风格服务端渲染 MVC + HTML Template (带头像上传与搜索) 完整 Demo
-  * [`examples/03_mysql_crud/`](./examples/03_mysql_crud/) - 模式三：MySQL 数据库增删改查实战 (RESTful CRUD + 连接池 + 事务) 完整 Demo
+  * [`examples/01_api_spa/`](./examples/01_api_spa/) - 架构模式一：前后端分离 RESTful API + SPA 单页 (带文件上传与分页) 完整 Demo
+  * [`examples/02_mvc_template/`](./examples/02_mvc_template/) - 架构模式二：经典服务端渲染 MVC + HTML Template 套页面 (带头像上传与搜索) 完整 Demo
+  * [`examples/database_mysql/`](./examples/database_mysql/) - 数据库实战工程：MySQL 连接池、CRUD 与事务操作完整示例
   * [`dist/`](./dist/) - 编译生成的跨平台单文件可执行程序输出目录
 * **核心文档与开发手册 (`docs/`)**：
   * [`docs/database.md`](./docs/database.md) - 数据库与 ActiveRecord 开发手册 (含 MySQL 生产连接池与 CRUD 实战)

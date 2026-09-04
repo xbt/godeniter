@@ -68,9 +68,9 @@
   - [x] `godeniter version` 与帮助信息输出
 - [x] **单文件打包与 Windows 交付支持**
   - [x] `embed.FS` 内嵌 HTML 模板与静态资源
-  - [x] 模式一：前后端分离 RESTful API + SPA 完整 Demo (`examples/01_api_spa/`)
-  - [x] 模式二：经典 PHP 风格服务端渲染 MVC 完整 Demo (`examples/02_mvc_template/`)
-  - [x] 模式三：MySQL 数据库增删改查实战完整 Demo (`examples/03_mysql_crud/`)
+  - [x] 架构模式一：前后端分离 RESTful API + SPA 完整 Demo (`examples/01_api_spa/`)
+  - [x] 架构模式二：经典 PHP 风格服务端渲染 MVC 套页面完整 Demo (`examples/02_mvc_template/`)
+  - [x] 数据库实战工程：MySQL 连接池与 CRUD 实战示例 (`examples/database_mysql/`)
   - [x] 跨平台一键编译脚本 (`build.sh`, `build.bat`)，一键生成 Windows `.exe`
 - [x] **全套 CodeIgniter 风格开发者文档体系**
   - [x] 主入口 [`README.md`](../README.md)（代码用法与单文件打包彻底分离）

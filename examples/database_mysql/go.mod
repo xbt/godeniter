@@ -1,4 +1,4 @@
-module github.com/xbt/godeniter/examples/03_mysql_crud
+module github.com/xbt/godeniter/examples/database_mysql
 
 go 1.20
 
