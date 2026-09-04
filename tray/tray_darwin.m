@@ -105,6 +105,10 @@ void native_run_loop(void) {
 
 void native_quit_loop(void) {
     dispatch_async(dispatch_get_main_queue(), ^{
+        if (globalStatusItem) {
+            [[NSStatusBar systemStatusBar] removeStatusItem:globalStatusItem];
+            globalStatusItem = nil;
+        }
         [NSApp stop:nil];
         NSEvent* event = [NSEvent otherEventWithType:NSEventTypeApplicationDefined
                                             location:NSMakePoint(0, 0)

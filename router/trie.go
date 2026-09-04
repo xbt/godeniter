@@ -26,25 +26,42 @@ type node struct {
 	handlers []interface{}    // 挂载在该路由上的处理函数与中间件链
 }
 
-// matchChild 查找第一个匹配 part 的子节点（优先精准匹配，其次动态匹配）。
-func (n *node) matchChild(part string) *node {
+// exactChild 查找与 part 完全相等的子节点（用于插入路由规则，确保精确节点与通配节点完全隔离）。
+func (n *node) exactChild(part string) *node {
 	for _, child := range n.children {
-		if child.part == part || child.isWild {
+		if child.part == part {
 			return child
 		}
 	}
 	return nil
 }
 
-// matchChildren 查找所有可能匹配 part 的子节点。
+// matchChildren 按照优先权排序查找可能匹配 part 的子节点：
+// 1. 静态精准匹配 (!isWild && child.part == part) - 最高优先级
+// 2. 命名参数匹配 (isWild && child.part 以 ':' 开头) - 次高优先级
+// 3. 通配符匹配 (isWild && child.part 以 '*' 开头) - 最低优先级
 func (n *node) matchChildren(part string) []*node {
-	nodes := make([]*node, 0)
+	var exactNodes []*node
+	var paramNodes []*node
+	var wildNodes []*node
+
 	for _, child := range n.children {
-		if child.part == part || child.isWild {
-			nodes = append(nodes, child)
+		if !child.isWild && child.part == part {
+			exactNodes = append(exactNodes, child)
+		} else if child.isWild {
+			if strings.HasPrefix(child.part, ":") {
+				paramNodes = append(paramNodes, child)
+			} else if strings.HasPrefix(child.part, "*") {
+				wildNodes = append(wildNodes, child)
+			}
 		}
 	}
-	return nodes
+
+	result := make([]*node, 0, len(exactNodes)+len(paramNodes)+len(wildNodes))
+	result = append(result, exactNodes...)
+	result = append(result, paramNodes...)
+	result = append(result, wildNodes...)
+	return result
 }
 
 // insert 递归向 Trie 树中插入一个路由规则。
@@ -60,7 +77,8 @@ func (n *node) insert(pattern string, parts []string, height int, handlers []int
 	}
 
 	part := parts[height]
-	child := n.matchChild(part)
+	// 插入阶段必须使用精确查找，绝不能复用 isWild 通配节点，避免静态路由覆盖动态路由
+	child := n.exactChild(part)
 	if child == nil {
 		// 创建新节点，如果以 ':' 或 '*' 开头则标记为动态通配节点
 		child = &node{
@@ -86,6 +104,7 @@ func (n *node) search(parts []string, height int) *node {
 	}
 
 	part := parts[height]
+	// 按照 精准 > 参数 > 通配符 的优先级遍历子分支
 	children := n.matchChildren(part)
 
 	for _, child := range children {

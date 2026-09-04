@@ -192,6 +192,13 @@ func ParseHTMLFS(embedFS fs.FS, funcMap template.FuncMap, patterns ...string) (*
 	return tmpl, nil
 }
 
+// SetFuncMap 为模板引擎注册全局自定义函数字典（请在调用 LoadHTMLFS 或 LoadHTMLGlob 之前设置）。
+// 支持流畅链式调用，例如：app.SetFuncMap(template.FuncMap{...}).LoadHTMLFS(...)
+func (engine *Engine) SetFuncMap(funcMap template.FuncMap) *Engine {
+	engine.funcMap = funcMap
+	return engine
+}
+
 // SetHTMLTemplate 设置自定义已解析的 HTML 模板对象。
 func (engine *Engine) SetHTMLTemplate(tmpl *template.Template) {
 	engine.htmlTemplates = tmpl

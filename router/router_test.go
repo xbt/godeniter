@@ -104,3 +104,49 @@ func TestRouterGroup(t *testing.T) {
 		t.Errorf("分组路由前缀拼接错误: POST /api/v1/users 缺失")
 	}
 }
+
+func TestRouter_StaticVsParamPriorityAndNoOverwrite(t *testing.T) {
+	r := NewRouter()
+
+	// 1. 故意先注册动态参数路由，再注册同级的静态精确路由
+	r.AddRoute("GET", "/articles/:id", "detailHandler")
+	r.AddRoute("GET", "/articles/create", "createHandler")
+	r.AddRoute("GET", "/articles/top/hot", "hotHandler")
+	r.AddRoute("GET", "/articles/*filepath", "wildHandler")
+
+	// 2. 验证静态精确路由优先命中
+	resCreate := r.GetRoute("GET", "/articles/create")
+	if resCreate == nil || resCreate.Node.pattern != "/articles/create" {
+		t.Fatalf("静态路由 /articles/create 未能优先匹配，得到: %v", resCreate)
+	}
+	if len(resCreate.Handlers) == 0 || resCreate.Handlers[0] != "createHandler" {
+		t.Fatalf("期望命中 createHandler，实际: %v", resCreate.Handlers)
+	}
+
+	// 3. 验证动态参数路由正常命中且未被覆盖
+	resDetail := r.GetRoute("GET", "/articles/10086")
+	if resDetail == nil || resDetail.Node.pattern != "/articles/:id" {
+		t.Fatalf("动态路由 /articles/:id 匹配失败，得到: %v", resDetail)
+	}
+	if resDetail.Params.Get("id") != "10086" {
+		t.Fatalf("参数解析错误，期望 10086，得到: %s", resDetail.Params.Get("id"))
+	}
+	if len(resDetail.Handlers) == 0 || resDetail.Handlers[0] != "detailHandler" {
+		t.Fatalf("期望命中 detailHandler，实际: %v", resDetail.Handlers)
+	}
+
+	// 4. 验证多层静态路由
+	resHot := r.GetRoute("GET", "/articles/top/hot")
+	if resHot == nil || resHot.Node.pattern != "/articles/top/hot" {
+		t.Fatalf("多层静态路由匹配失败，得到: %v", resHot)
+	}
+
+	// 5. 验证未知多层路径回退命中通配符
+	resWild := r.GetRoute("GET", "/articles/download/2026/report.pdf")
+	if resWild == nil || resWild.Node.pattern != "/articles/*filepath" {
+		t.Fatalf("通配符兜底路由匹配失败，得到: %v", resWild)
+	}
+	if resWild.Params.Get("filepath") != "download/2026/report.pdf" {
+		t.Fatalf("通配符路径解析错误: %s", resWild.Params.Get("filepath"))
+	}
+}

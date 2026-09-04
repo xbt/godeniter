@@ -34,7 +34,7 @@ func (qb *QueryBuilder) Paginate(page, pageSize int, destSlicePtr any) (*Paginat
 	}
 
 	totalPages := int(math.Ceil(float64(total) / float64(pageSize)))
-	if totalPages == 0 && total > 0 {
+	if totalPages <= 0 {
 		totalPages = 1
 	}
 

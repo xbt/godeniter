@@ -410,7 +410,7 @@ func (c *Context) Session() (any, bool) {
 	return c.Get("session")
 }
 
-// SetFuncMap 为模板引擎注册自定义函数字典。
+// SetFuncMap 为模板引擎注册自定义函数字典 (建议在应用初始化阶段直接调用 app.SetFuncMap)。
 func (c *Context) SetFuncMap(funcMap template.FuncMap) {
-	c.engine.funcMap = funcMap
+	c.engine.SetFuncMap(funcMap)
 }

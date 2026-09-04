@@ -332,6 +332,9 @@ func showWindowsTrayMenu(hwnd uintptr) {
 		0,
 	)
 
+	// 微软官方规范: 必须在 TrackPopupMenu 之后投递 WM_NULL 消息，以确保点击空白区域收起后能再次正常右键弹出
+	procPostMessageW.Call(hwnd, 0, 0, 0)
+
 	// 后续处理被选中的动作
 	if cmd > 0 {
 		globalLock.RLock()
