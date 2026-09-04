@@ -4,7 +4,7 @@ package upload
 
 import (
 	"fmt"
-	"godeniter/utils/str"
+	"github.com/xbt/godeniter/utils/str"
 	"io"
 	"mime/multipart"
 	"os"

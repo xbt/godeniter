@@ -3,9 +3,9 @@ package godeniter
 
 import (
 	"fmt"
-	"godeniter/inject"
-	"godeniter/router"
-	"godeniter/session"
+	"github.com/xbt/godeniter/inject"
+	"github.com/xbt/godeniter/router"
+	"github.com/xbt/godeniter/session"
 	"html/template"
 	"io/fs"
 	"log"

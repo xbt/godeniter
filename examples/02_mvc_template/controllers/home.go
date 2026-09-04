@@ -1,9 +1,9 @@
 package controllers
 
 import (
-	"godeniter"
-	"godeniter/session"
-	"godeniter/utils/str"
+	"github.com/xbt/godeniter"
+	"github.com/xbt/godeniter/session"
+	"github.com/xbt/godeniter/utils/str"
 	"net/http"
 	"strings"
 )

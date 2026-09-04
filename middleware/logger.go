@@ -3,7 +3,7 @@ package middleware
 
 import (
 	"fmt"
-	"godeniter/router"
+	"github.com/xbt/godeniter/router"
 	"net/http"
 	"time"
 )

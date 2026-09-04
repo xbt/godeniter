@@ -2,9 +2,9 @@ package main
 
 import (
 	"embed"
-	"godeniter"
-	"godeniter/examples/01_api_spa/handlers"
-	"godeniter/middleware"
+	"github.com/xbt/godeniter"
+	"github.com/xbt/godeniter/examples/01_api_spa/handlers"
+	"github.com/xbt/godeniter/middleware"
 	"net/http"
 	"os"
 )

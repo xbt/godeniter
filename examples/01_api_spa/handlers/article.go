@@ -2,10 +2,10 @@ package handlers
 
 import (
 	"fmt"
-	"godeniter"
-	"godeniter/examples/01_api_spa/models"
-	"godeniter/router"
-	"godeniter/utils/str"
+	"github.com/xbt/godeniter"
+	"github.com/xbt/godeniter/examples/01_api_spa/models"
+	"github.com/xbt/godeniter/router"
+	"github.com/xbt/godeniter/utils/str"
 	"math"
 	"net/http"
 	"path/filepath"

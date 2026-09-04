@@ -117,8 +117,8 @@ func generateAPITemplate(dir, projectName string) error {
 
 go 1.20
 
-require godeniter v0.0.0
-replace godeniter => ../godeniter
+require github.com/xbt/godeniter v0.0.0
+replace github.com/xbt/godeniter => ../godeniter
 `, projectName)
 	writeFile(filepath.Join(dir, "go.mod"), goModContent)
 
@@ -127,8 +127,8 @@ replace godeniter => ../godeniter
 
 import (
 	"embed"
-	"godeniter"
-	"godeniter/middleware"
+	"github.com/xbt/godeniter"
+	"github.com/xbt/godeniter/middleware"
 	"` + projectName + `/handlers"
 	"net/http"
 )
@@ -288,8 +288,8 @@ func generateMVCTemplate(dir, projectName string) error {
 
 go 1.20
 
-require godeniter v0.0.0
-replace godeniter => ../godeniter
+require github.com/xbt/godeniter v0.0.0
+replace github.com/xbt/godeniter => ../godeniter
 `, projectName)
 	writeFile(filepath.Join(dir, "go.mod"), goModContent)
 
@@ -298,7 +298,7 @@ replace godeniter => ../godeniter
 
 import (
 	"embed"
-	"godeniter"
+	"github.com/xbt/godeniter"
 	"html/template"
 	"io/fs"
 	"` + projectName + `/controllers"
@@ -325,7 +325,7 @@ func main() {
 	ctrlContent := `package controllers
 
 import (
-	"godeniter"
+	"github.com/xbt/godeniter"
 	"net/http"
 )
 

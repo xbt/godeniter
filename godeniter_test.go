@@ -2,7 +2,7 @@ package godeniter
 
 import (
 	"encoding/json"
-	"godeniter/router"
+	"github.com/xbt/godeniter/router"
 	"net/http"
 	"net/http/httptest"
 	"strings"

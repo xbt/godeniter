@@ -2,9 +2,9 @@ package main
 
 import (
 	"embed"
-	"godeniter"
-	"godeniter/examples/02_mvc_template/controllers"
-	"godeniter/session"
+	"github.com/xbt/godeniter"
+	"github.com/xbt/godeniter/examples/02_mvc_template/controllers"
+	"github.com/xbt/godeniter/session"
 	"html/template"
 	"io/fs"
 	"os"
