@@ -263,6 +263,16 @@ func (engine *Engine) Run(addr ...string) error {
 
 	select {
 	case err := <-serverErr:
+		fmt.Printf("\n >> [ERROR] Web 服务在 [%s] 启动失败: %v\n", listenAddr, err)
+		if strings.Contains(err.Error(), "address already in use") {
+			cleanPort := listenAddr
+			if cleanPort != "" && cleanPort[0] == ':' {
+				cleanPort = cleanPort[1:]
+			}
+			fmt.Printf(" >> [TIP] 端口 [%s] 已被占用！\n", listenAddr)
+			fmt.Printf(" >> [TIP] 解决方案 1: 在终端执行 'lsof -ti :%s | xargs kill -9' 结束占用进程。\n", cleanPort)
+			fmt.Printf(" >> [TIP] 解决方案 2: 在 config.json 中修改 \"port\": \":9090\" 使用其他未被占用的端口。\n\n")
+		}
 		return err
 	case sig := <-stopChan:
 		fmt.Printf("\n >> 接收到终止信号 [%s]，正在平滑关闭服务 (Graceful Shutdown)...\n", sig)
