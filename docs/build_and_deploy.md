@@ -70,7 +70,7 @@ build.bat      # Windows
 
 ## 4. UPX 极速瘦身与 Windows 数字签名 (防拦截)
 
-若需要将体积从 9.5MB 压缩至 3MB，或消除 Windows SmartScreen 蓝底拦截警告与杀软误报，请参阅：
+若需要使用 UPX 进一步压缩可执行文件体积，或消除 Windows SmartScreen 蓝底拦截警告与杀软误报，请参阅：
 👉 **[《Windows 数字签名与代码证书实战手册 (docs/code_signing.md)》](./code_signing.md)**：
 * 包含纯 Go 标准库生成自签证书 (`cmd/cert`)；
 * UPX 压缩与数字签名的正确流水线顺序；

@@ -37,10 +37,10 @@ uploads/*
 *.syso
 
 # Certificates and private keys (CONFIDENTIAL - DO NOT COMMIT!)
-certs/
 *.key
 *.pfx
 *.p12
-*.cer
-*.crt
+certs/*.key
+certs/*.pfx
+certs/*.p12
 
