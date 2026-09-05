@@ -49,6 +49,27 @@ go run github.com/xbt/godeniter/cmd/cert -name "我的软件开发工作室" -or
 * `app_codesign.cer`：DER 格式公钥证书（公开给客户电脑一键信任）
 * `app_codesign.crt`：PEM 格式公钥文本
 
+#### 证书生成工具 (`cmd/cert`) 完整参数选项：
+
+| 参数选项 | 默认值 | 作用说明与展示位置 |
+| :--- | :--- | :--- |
+| **`-name`** | `"Godeniter Software Developer"` | **签名人 / 软件发布者姓名** (Common Name)，直接显示在 Windows 右键属性【数字签名】中的“签名人姓名”一栏。 |
+| **`-org`** | `"Godeniter Project"` | **组织 / 公司全称** (Organization)，显示在证书详细信息中的“颁发者单位”。 |
+| **`-years`** | `5` | **证书有效年限** (年)，自签证书不受 CA 限制，可按需设为 5 年或 10 年。 |
+| **`-pass`** | `"123456"` | **PFX 签名包加密密码**，签名工具读取 `.pfx` 时需要输入的密码。 |
+| **`-out`** | `"./certs"` | **证书文件输出目录**。 |
+| **`-c`** | `"CN"` | **两字母国家代码** (Country，如 `CN`, `US`)。 |
+
+#### 完整定制范例：
+```bash
+go run github.com/xbt/godeniter/cmd/cert \
+  -name "我的企业级协同平台" \
+  -org "北京未来科技有限公司" \
+  -years 10 \
+  -pass "MySecretPassword2026" \
+  -out ./certs
+```
+
 ---
 
 ### 第二步：编译单文件程序
