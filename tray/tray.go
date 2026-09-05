@@ -29,8 +29,9 @@ type Options struct {
 	AppDir    string     // 应用根目录 (默认当前可执行程序所在目录)
 	Version   string     // 应用版本 (如 "v1.0.0")
 	Port      string     // 监听端口号 (如 ":8080")
-	OnExit    func()     // 托盘退出前执行的清理或优雅停机钩子
-	Menus     []MenuItem // 自定义扩展菜单项 (将与默认菜单合并)
+	OnExit      func()     // 托盘退出前执行的清理或优雅停机钩子
+	Menus       []MenuItem // 自定义扩展菜单项 (将与默认菜单合并)
+	HideConsole bool       // 是否在启动托盘时自动隐藏控制台黑框 (Windows 原生生效，默认开启)
 }
 
 // DefaultOptions 返回开箱即用的托盘默认配置
@@ -40,11 +41,12 @@ func DefaultOptions() Options {
 		dir = "."
 	}
 	return Options{
-		Title:   "Godeniter",
-		Tooltip: "Godeniter Web Service",
-		URL:     "http://127.0.0.1:8080",
-		AppDir:  dir,
-		Version: "v1.0.0",
+		Title:       "Godeniter",
+		Tooltip:     "Godeniter Web Service",
+		URL:         "http://127.0.0.1:8080",
+		AppDir:      dir,
+		Version:     "v1.0.0",
+		HideConsole: true,
 	}
 }
 

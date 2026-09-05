@@ -213,3 +213,9 @@ func buildFullMenuItems(opts Options) []MenuItem {
 
 	return items
 }
+
+// HideConsole 在非 Windows 环境下为空实现
+func HideConsole() {}
+
+// ShowConsole 在非 Windows 环境下为空实现
+func ShowConsole() {}

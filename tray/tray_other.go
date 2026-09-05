@@ -56,3 +56,9 @@ func ShowAbout(opts Options) {
 	fmt.Printf("\n--- 关于 %s ---\n版本: %s\n进程 PID: %d\n监听端口: %s\n底层框架: Godeniter (Go %s)\n---------------------\n\n",
 		appTitle, version, os.Getpid(), opts.Port, runtime.Version())
 }
+
+// HideConsole 在非 Windows 环境下为空实现
+func HideConsole() {}
+
+// ShowConsole 在非 Windows 环境下为空实现
+func ShowConsole() {}

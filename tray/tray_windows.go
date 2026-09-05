@@ -40,7 +40,30 @@ var (
 
 	procShell_NotifyIconW       = modshell32.NewProc("Shell_NotifyIconW")
 	procGetModuleHandleW        = modkernel32.NewProc("GetModuleHandleW")
+	procGetConsoleWindow        = modkernel32.NewProc("GetConsoleWindow")
+	procShowWindow              = moduser32.NewProc("ShowWindow")
 )
+
+const (
+	SW_HIDE = 0
+	SW_SHOW = 5
+)
+
+// HideConsole 在 Windows 下自动隐藏当前控制台黑框窗口 (纯 Win32 原生 API)
+func HideConsole() {
+	hwnd, _, _ := procGetConsoleWindow.Call()
+	if hwnd != 0 {
+		procShowWindow.Call(hwnd, uintptr(SW_HIDE))
+	}
+}
+
+// ShowConsole 在 Windows 下显示当前控制台黑框窗口
+func ShowConsole() {
+	hwnd, _, _ := procGetConsoleWindow.Call()
+	if hwnd != 0 {
+		procShowWindow.Call(hwnd, uintptr(SW_SHOW))
+	}
+}
 
 const (
 	WM_DESTROY       = 0x0002
@@ -159,6 +182,11 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 func Run(opts Options) error {
 	runtime.LockOSThread()
 	globalOpts = opts
+
+	// 若开启了隐藏控制台 (默认开启)，自动隐去黑色 CMD 窗口
+	if opts.HideConsole {
+		HideConsole()
+	}
 
 	// 捕获系统退出信号 (Ctrl+C 与 kill)，确保控制台随时按 Ctrl+C 能平滑关闭并安全退出
 	sigChan := make(chan os.Signal, 1)

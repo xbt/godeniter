@@ -35,15 +35,12 @@ func main() {
 
 ## 2. 跨平台一键编译命令
 
-### (1) macOS / Linux 编译 Windows 64位独立程序
+### (1) Windows 64位统一全能单文件编译
 ```bash
-# 1. Windows 控制台版 (双击运行弹出控制台窗口，方便查看实时请求日志)
+# Windows 统一单文件 (0 外部依赖，免 CGO 交叉编译)
 CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o dist/app.exe .
 
-# 2. Windows 纯静默托盘客户端 (彻底隐藏控制台黑框，双击后直接常驻右下角通知区域)
-CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -H=windowsgui" -o dist/app_tray.exe .
-
-# 3. macOS / Linux 统一二进制
+# macOS / Linux 统一二进制
 go build -ldflags="-s -w" -o dist/app .
 ```
 
@@ -63,8 +60,8 @@ build.bat      # Windows
 
 ---
 
-## 3. 客户机交付效果
+## 3. 客户机交付与使用体验
 
-将编译生成的 `dist/` 文件拷贝至客户机器：
-1. **控制台版 `app.exe`**：双击弹出终端，显示 ASCII 启动横幅并提示本机访问地址（如 `http://127.0.0.1:8080`），适合服务器环境；
-2. **托盘版 `app_tray.exe`**：双击**无任何黑框**，右下角直接点亮专属托盘图标，右键提供“打开管理后台、打开应用目录、关于系统、退出程序”原生菜单，双击图标直接调起默认浏览器，交付体验极佳！
+将编译生成的 `dist/app.exe` 拷贝至 Windows 客户机器：
+1. **终端 CLI 运维**：在 CMD / PowerShell 运行 `app.exe start/status/stop/restart`，全生命周期指令清晰友好，不跳多余黑框；
+2. **桌面双击 / 托盘模式**：双击 `app.exe`（或运行 `app.exe tray`），底层自动调用 Win32 原生 API 隐去控制台黑框，右下角直接点亮专属托盘图标，右键提供“打开管理后台、打开应用目录、关于系统、退出程序”原生菜单，双击图标直接调起默认浏览器，交付体验极佳！

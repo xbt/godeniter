@@ -103,25 +103,38 @@ func main() {
 
 ---
 
-## 📦 跨平台打包与无黑框静默客户端
+## 📦 跨平台打包与统一单二进制规范
+
+Godeniter 推荐 **单一全能二进制 (`dist/app.exe` / `dist/app`)** 的优雅交付方式，杜绝多可执行文件带来的困惑。
 
 ### 1. 打包命令
 
 ```bash
-# 生成标准控制台版 (双击运行保留控制台窗口，方便查看调试日志)
+# 生成 Windows 64位统一全能单文件 (纯 Go 交叉编译，免 CGO)
 CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o dist/app.exe .
-
-# 生成纯静默桌面托盘客户端 (彻底隐藏控制台黑框，直接在托盘常驻！)
-CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -H=windowsgui" -o dist/app_tray.exe .
 
 # 生成 macOS / Linux 统一二进制
 go build -ldflags="-s -w" -o dist/app .
 ```
 
-### 2. 脚手架一键构建
+### 2. 黑框自动隐身机制 (Win32 原生)
+
+在 Windows 环境下，`tray.Run` 默认开启了 `HideConsole: true` 选项：
+* **普通用户双击 `app.exe` (或以托盘模式运行)**：Windows 原生 API `ShowWindow(hwnd, SW_HIDE)` 将在毫秒级自动隐去黑色的控制台窗口，右下角托盘图标与右键菜单优雅常驻。
+* **管理员在 CMD / PowerShell 中敲命令**：
+  * `app.exe` (前台日志模式，按 Ctrl+C 优雅停机)
+  * `app.exe start` (后台守护进程启动)
+  * `app.exe status` (查看运行状态与 PID)
+  * `app.exe stop` (停止服务)
+  * `app.exe restart` (平滑重启)
+  * `app.exe tray` (显式以托盘模式运行，黑框自动隐藏)
+
+所有 CLI 指令都在已有终端中完整输出提示，既不会跳出多余黑框，也不会丢失终端字符！
+
+### 3. 脚手架一键构建
 在 `godeniter-starter` 脚手架中，直接执行：
 ```bash
 ./build.sh     # macOS / Linux
 build.bat      # Windows
 ```
-脚本将自动检测 `app.ico` 动态编译资源段，并同时在 `dist/` 目录下生成上述三种交付物！
+脚本将自动检测 `app.ico` 动态编译资源段，并在 `dist/` 目录下生成统一且全能的单二进制产物！
