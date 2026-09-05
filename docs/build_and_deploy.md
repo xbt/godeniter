@@ -65,3 +65,13 @@ build.bat      # Windows
 将编译生成的 `dist/app.exe` 拷贝至 Windows 客户机器：
 1. **终端 CLI 运维**：在 CMD / PowerShell 运行 `app.exe start/status/stop/restart`，全生命周期指令清晰友好，不跳多余黑框；
 2. **桌面双击 / 托盘模式**：双击 `app.exe`（或运行 `app.exe tray`），底层自动调用 Win32 原生 API 隐去控制台黑框，右下角直接点亮专属托盘图标，右键提供“打开管理后台、打开应用目录、关于系统、退出程序”原生菜单，双击图标直接调起默认浏览器，交付体验极佳！
+
+---
+
+## 4. UPX 极速瘦身与 Windows 数字签名 (防拦截)
+
+若需要将体积从 9.5MB 压缩至 3MB，或消除 Windows SmartScreen 蓝底拦截警告与杀软误报，请参阅：
+👉 **[《Windows 数字签名与代码证书实战手册 (docs/code_signing.md)》](./code_signing.md)**：
+* 包含纯 Go 标准库生成自签证书 (`cmd/cert`)；
+* UPX 压缩与数字签名的正确流水线顺序；
+* 客户机一键导入公钥 (`certutil`) 终身免告警实战。

@@ -32,3 +32,15 @@ scratch/
 tmp/
 uploads/*
 !uploads/.gitkeep
+
+# Windows compiled resources
+*.syso
+
+# Certificates and private keys (CONFIDENTIAL - DO NOT COMMIT!)
+certs/
+*.key
+*.pfx
+*.p12
+*.cer
+*.crt
+

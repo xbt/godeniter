@@ -599,6 +599,8 @@ Godeniter 基于 **100% 纯 Go 标准库与 `embed.FS`** 设计，天然具备�
   * [`utils/upload/`](./utils/upload/) - 文件上传安全处理类与存储校验器
 * **命令行与开箱即用示例**：
   * [`cmd/godeniter/`](./cmd/godeniter/) - 官方 CLI 脚手架工具 (`godeniter new`)
+  * [`cmd/rsrc/`](./cmd/rsrc/) - 纯 Go 标准库 Windows 图标资源段编译器 (`.ico` -> `.syso`)
+  * [`cmd/cert/`](./cmd/cert/) - 纯 Go 标准库 Windows 代码签名自签证书生成工具 (0 依赖 RSA+X.509)
   * [`examples/01_api_spa/`](./examples/01_api_spa/) - 架构模式一：前后端分离 RESTful API + SPA 单页 (带文件上传与分页) 完整 Demo
   * [`examples/02_mvc_template/`](./examples/02_mvc_template/) - 架构模式二：经典服务端渲染 MVC + HTML Template 套页面 (带头像上传与搜索) 完整 Demo
   * [`examples/database_mysql/`](./examples/database_mysql/) - 数据库实战工程：MySQL 连接池、CRUD 与事务操作完整示例
@@ -608,6 +610,7 @@ Godeniter 基于 **100% 纯 Go 标准库与 `embed.FS`** 设计，天然具备�
   * [`docs/config.md`](./docs/config.md) - 0 依赖动态配置 (`config.json`)、数据库连接与客户机端口修改手册
   * [`docs/daemon.md`](./docs/daemon.md) - 服务生命周期与守护进程运维手册 (start/stop/restart/status)
   * [`docs/tray.md`](./docs/tray.md) - 跨平台桌面系统托盘与状态栏常驻模式手册 (macOS/Windows/Linux)
+  * [`docs/code_signing.md`](./docs/code_signing.md) - Windows 数字签名与代码证书实战手册 (防拦截、防杀软误报与一键信任)
   * [`docs/build_and_deploy.md`](./docs/build_and_deploy.md) - 跨平台单文件打包与 Windows 客户机交付手册
   * [`docs/offline.md`](./docs/offline.md) - 离线环境与受限网络开发/编译指南 (Zip 包即用与单文件交付)
   * [`docs/progress.md`](./docs/progress.md) - 框架开发进度、架构设计原则与版本演进记录
