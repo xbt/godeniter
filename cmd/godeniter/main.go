@@ -1,3 +1,7 @@
+// Copyright (c) 2026 xbt. All rights reserved.
+// Godeniter is licensed under the GNU General Public License v3.0 (GPL-3.0).
+// See LICENSE file in the project root for full license information.
+
 // Package main 提供了 Godeniter 框架的官方命令行脚手架工具。
 // 类似于 php artisan 或 codeigniter spark，支持一键创建前后端分离 API 与经典 MVC 新工程模版。
 package main

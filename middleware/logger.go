@@ -1,3 +1,7 @@
+// Copyright (c) 2026 xbt. All rights reserved.
+// Godeniter is licensed under the GNU General Public License v3.0 (GPL-3.0).
+// See LICENSE file in the project root for full license information.
+
 // Package middleware 提供了 Godeniter 框架的常用内置中间件。
 package middleware
 

@@ -1,3 +1,7 @@
+// Copyright (c) 2026 xbt. All rights reserved.
+// Godeniter is licensed under the GNU General Public License v3.0 (GPL-3.0).
+// See LICENSE file in the project root for full license information.
+
 // Package inject 提供了纯 Go 标准库（基于 reflect 反射）实现的轻量级依赖注入容器。
 // 该模块的设计思想参考了经典框架 Martini (codegangsta/inject)，
 // 能够支持在运行时根据函数的入参类型自动解析并注入依赖，使得 HTTP Handler 和中间件的函数签名更加灵活自由。

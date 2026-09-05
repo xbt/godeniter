@@ -1,3 +1,7 @@
+// Copyright (c) 2026 xbt. All rights reserved.
+// Godeniter is licensed under the GNU General Public License v3.0 (GPL-3.0).
+// See LICENSE file in the project root for full license information.
+
 // Package godeniter 是一个纯 Go 标准库实现、支持依赖注入、Trie 路由与极简 MVC 的 Web 框架。
 package godeniter
 

@@ -1,3 +1,7 @@
+// Copyright (c) 2026 xbt. All rights reserved.
+// Godeniter is licensed under the GNU General Public License v3.0 (GPL-3.0).
+// See LICENSE file in the project root for full license information.
+
 // Package db 提供了基于 Go 原生 database/sql 的极简轻量级数据库查询构建器与 ORM 映射工具。
 // 设计风格契合经典 PHP (CodeIgniter ActiveRecord / Laravel Fluent Query) 的链式调用习惯。
 package db

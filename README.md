@@ -621,3 +621,5 @@ Godeniter 基于 **100% 纯 Go 标准库与 `embed.FS`** 设计，天然具备�
 
 Godeniter 核心框架基于 **[GNU General Public License v3.0 (GPL-3.0)](./LICENSE)** 协议开源。
 
+Copyright (c) 2026 xbt. All rights reserved.
+

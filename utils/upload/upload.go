@@ -1,3 +1,7 @@
+// Copyright (c) 2026 xbt. All rights reserved.
+// Godeniter is licensed under the GNU General Public License v3.0 (GPL-3.0).
+// See LICENSE file in the project root for full license information.
+
 // Package upload 提供了类似 PHP CodeIgniter Upload 类的文件上传与安全存储处理。
 // 100% 纯 Go 标准库实现，支持文件大小、扩展名白名单校验与时间戳随机重命名。
 package upload

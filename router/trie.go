@@ -1,3 +1,7 @@
+// Copyright (c) 2026 xbt. All rights reserved.
+// Godeniter is licensed under the GNU General Public License v3.0 (GPL-3.0).
+// See LICENSE file in the project root for full license information.
+
 // Package router 提供了纯 Go 标准库实现的高性能 Trie（前缀树）路由器。
 // 支持 RESTful HTTP 动词匹配、命名动态路由参数 (:param)、全匹配通配符 (*filepath)、路由分组及分组级中间件机制。
 package router
