@@ -91,14 +91,22 @@
 * **`utils/str/`**：类似 PHP 经典辅助函数，提供高强度随机串生成、UUIDv4、大小驼峰/蛇形/短横线互转、UTF-8 字符截断、敏感信息脱敏（手机号/邮箱/身份证）与安全哈希。
 * **`utils/upload/`**：对标 CodeIgniter Upload 类，提供上传文件安全存储、大小限制与扩展名白名单拦截器。
 
-### 8. 官方 CLI 脚手架工具 (`cmd/godeniter/`)
-* 提供类似 `php artisan` 的命令行项目初始化能力。
-* 命令 `godeniter new <project_name> --template=api|mvc` 可一键生成规范的工程目录骨架、路由配置文件、控制器、模型、前端单页及单文件打包构建脚本。
+### 8. 纯标准库 Windows 图标编译器 (`utils/rsrc` / `cmd/rsrc`)
+* **0 外部工具依赖**：框架内原生实现了将 `.ico` 文件解析并转译为 Windows COFF `resource_windows_amd64.syso` 的纯 Go 编译器，彻底替代第三方的 `rsrc` 或 GCC `windres`。
+* **动态缝合**：打包脚本自动探测项目中的 `app.ico`，在构建时将资源段缝合进 `.exe`，实现双端（Windows 桌面图标 + Web Favicon）一体化。
+
+### 9. 服务生命周期与守护进程管理 (`daemon/`)
+* **纯 Go 跨平台实现**：在 Linux/macOS 上通过系统调用脱离终端（Setsid），在 Windows 上通过 `DETACHED_PROCESS` 剥离黑框控制台。
+* **类似 Nginx 指令**：统一提供 `start`, `stop`, `restart`, `status` 与 `app.pid` / `app.log` 状态与重定向闭环管理。
+
+### 10. 跨平台桌面系统托盘与状态栏 (`tray/`)
+* **macOS 端**：基于原生 Cocoa / AppKit 驱动，以 Accessory 模式常驻右上角状态栏，自适应宽度图文并茂，支持经典四件套下拉菜单。
+* **Windows 端**：100% 纯 Go 标准库 `syscall` Win32 API（`shell32.dll` 与 `user32.dll`）驱动，0 CGO 免编译门槛；遵循 KB139526 规范避免二次右键失灵。
+* **优雅停机协同**：捕获系统退出信号，实现点击退出或终端 Ctrl+C 时安全平滑关闭 HTTP 服务并秒级退出。
 
 ---
 
 ## 四、 后续演进路线建议
 
-1. **数据库驱动接入样例**：可按需编写接入纯 Go SQLite (`modernc.org/sqlite`) 或 MySQL (`github.com/go-sql-driver/mysql`) 的完整增删改查业务模块。
-2. **Flash 消息支持**：在 session 基础上增加一次性提示消息（Flash Data）。
-3. **数据库迁移工具 (Migrator)**：增加类似 `php artisan migrate` 的 SQL 迁移执行器。
+1. **数据库迁移工具 (Migrator)**：增加类似 `php artisan migrate` 的 SQL 结构迁移执行器。
+2. **连接池实时健康探针 (Health Check)**：提供面向生产微服务探针的 HTTP 健康检查端点。

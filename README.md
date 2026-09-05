@@ -606,6 +606,8 @@ Godeniter 基于 **100% 纯 Go 标准库与 `embed.FS`** 设计，天然具备�
 * **核心文档与开发手册 (`docs/`)**：
   * [`docs/database.md`](./docs/database.md) - 数据库与 ActiveRecord 开发手册 (含 MySQL 生产连接池与 CRUD 实战)
   * [`docs/config.md`](./docs/config.md) - 0 依赖动态配置 (`config.json`)、数据库连接与客户机端口修改手册
+  * [`docs/daemon.md`](./docs/daemon.md) - 服务生命周期与守护进程运维手册 (start/stop/restart/status)
+  * [`docs/tray.md`](./docs/tray.md) - 跨平台桌面系统托盘与状态栏常驻模式手册 (macOS/Windows/Linux)
   * [`docs/build_and_deploy.md`](./docs/build_and_deploy.md) - 跨平台单文件打包与 Windows 客户机交付手册
   * [`docs/offline.md`](./docs/offline.md) - 离线环境与受限网络开发/编译指南 (Zip 包即用与单文件交付)
   * [`docs/progress.md`](./docs/progress.md) - 框架开发进度、架构设计原则与版本演进记录

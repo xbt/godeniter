@@ -86,7 +86,29 @@
   - [x] 跨平台单文件打包手册 [`docs/build_and_deploy.md`](./build_and_deploy.md)
   - [x] 离线与受限网络开发指南 [`docs/offline.md`](./offline.md)
   - [x] 动态配置与数据库连接手册 [`docs/config.md`](./config.md)
+  - [x] 服务生命周期与守护进程手册 [`docs/daemon.md`](./daemon.md)
+  - [x] 跨平台桌面系统托盘开发手册 [`docs/tray.md`](./tray.md)
   - [x] 交互式 CodeIgniter 风格在线 HTML 控制台与用户手册 (`examples/01_api_spa/static/index.html`)
+- [x] **无侵入 HTML 模板预处理引擎 (`PreprocessHTMLTemplate`)**
+  - [x] 原生支持 `<!--{{ ... }}-->` 注释语法，静态 HTML 原型不乱码，编译后无缝渲染
+  - [x] `Engine.SetFuncMap(template.FuncMap)` 链式注册视图辅助函数
+  - [x] `LoadHTMLFS` 与 `LoadHTMLGlob` 内置无侵入转译支持
+- [x] **服务生命周期与守护进程管理器 (`daemon/`)**
+  - [x] 跨平台前台/后台守护模式切换（Setsid / DETACHED_PROCESS）
+  - [x] 提供 `start`, `stop`, `restart`, `status` 标准运维指令闭环
+  - [x] 自动探测并输出本地与局域网访问地址
+- [x] **纯标准库 Windows 图标编译器 (`utils/rsrc`)**
+  - [x] 纯 Go 标准库将 `.ico` 转为 COFF `syso`，0 外部工具链依赖
+  - [x] `app.ico` 动态探测与单文件打包自动缝合
+- [x] **跨平台系统托盘与状态栏客户端模式 (`tray/`)**
+  - [x] macOS 状态栏图文并茂自适应宽度与 Accessory 常驻模式
+  - [x] Windows 100% 纯 Go 标准库 Win32 托盘驱动，免 CGO，免第三方包
+  - [x] 经典原生菜单四件套（打开后台、打开应用目录、关于系统、退出程序）
+  - [x] 系统信号与主事件循环优雅退出联动
+- [x] **Trie 树前缀路由深度加固**
+  - [x] 静态精准节点与动态参数节点全等隔离，杜绝同级覆盖
+  - [x] 严格遵循“静态精准 > 命名参数 > 通配符”搜索优先级
+
 
 ---
 

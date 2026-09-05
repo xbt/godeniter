@@ -46,7 +46,7 @@
         </div>
 
         <div class="hero">
-            💡 本页面采用<strong>经典 PHP 服务端模板渲染 (SSR)</strong> 模式驱动。内置 <code>strutil</code> 字符串摘要脱敏、<code>session</code> 安全会话 与 文件上传处理！
+            💡 本页面采用<strong>经典 PHP 服务端模板渲染 (SSR)</strong> 模式驱动。内置 <code>utils/str</code> 字符串摘要脱敏、<code>session</code> 安全会话 与 文件上传处理！
         </div>
 
         {{ if .CurrentUser }}
@@ -71,7 +71,7 @@
                 <tr>
                     <th>工单编号</th>
                     <th>项目名称</th>
-                    <th>内容摘要 (strutil.Truncate)</th>
+                    <th>内容摘要 (str.Truncate)</th>
                     <th>联系人 (已脱敏)</th>
                     <th>状态</th>
                 </tr>

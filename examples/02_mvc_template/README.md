@@ -14,10 +14,10 @@
    * 基于 HMAC-SHA256 安全签名的防篡改 CookieStore，Controller 中直接声明 `sess session.Session` 即可使用 `sess.Set(...)` 与 `sess.GetString(...)`。
 3. **用户头像文件上传 (`c.FormFile`)**：
    * 支持通过传统 HTML Form POST 表单上传用户头像，校验文件大小与扩展名（`.jpg`, `.png`），保存并即时在界面回显。
-4. **字符串辅助处理 (`strutil`)**：
-   * 使用 `strutil.UUID()` 和 `MD5` 自动生成格式化工单编号（`PRJ-xxxx`）。
-   * 使用 `strutil.Truncate` 对长文本进行智能截断与摘要提取。
-   * 使用 `strutil.MaskPhone` 对手机号码进行脱敏保护。
+4. **字符串辅助处理 (`utils/str`)**：
+   * 使用 `str.UUID()` 和 `MD5` 自动生成格式化工单编号（`PRJ-xxxx`）。
+   * 使用 `str.Truncate` 对长文本进行智能截断与摘要提取。
+   * 使用 `str.MaskPhone` 对手机号码进行脱敏保护。
 5. **单文件内嵌打包**：
    * 通过 `//go:embed views/*` 将所有 HTML 模板自动打入单个可执行程序，部署到客户机器上绝无“模板丢失”烦恼。
 

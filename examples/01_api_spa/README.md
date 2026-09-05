@@ -15,9 +15,9 @@
    * 支持本地图片上传（`POST /api/v1/upload`），限制文件大小（5MB）、扩展名白名单（`.jpg`, `.png` 等），自动生成时间戳+随机防重名安全文件名。
 4. **数据库与内存分页检索 (`Paginate`)**：
    * 接口支持 `GET /api/v1/articles?page=1&page_size=5&keyword=golang`，自动输出分页元数据 `total`、`page`、`total_pages`、`has_next`、`has_prev`。
-5. **阅读量快捷自增与脱敏展示 (`strutil`)**：
+5. **阅读量快捷自增与脱敏展示 (`utils/str`)**：
    * 访问详情时阅读量自动 `Increment`。
-   * 作者手机号/邮箱通过 `strutil.MaskPhone` / `strutil.MaskEmail` 自动脱敏为 `138****5678`。
+   * 作者手机号/邮箱通过 `str.MaskPhone` / `str.MaskEmail` 自动脱敏为 `138****5678`。
 6. **单文件 SPA 内嵌交付**：
    * 通过 `//go:embed static/*` 将前端现代化管理面板打包进单一 `.exe`，双击运行即直接可用！
 
