@@ -579,41 +579,51 @@ Godeniter 基于 **100% 纯 Go 标准库与 `embed.FS`** 设计，天然具备�
 
 ---
 
-## 📂 项目模块结构
+## 📂 全项目模块与文件职责全景清单 (File-by-File Directory Index)
 
-* **根目录核心模块**（极简纯粹，仅保留启动与核心上下文）：
-  * [`godeniter.go`](./godeniter.go) - 核心引擎入口、模板加载与服务启动
-  * [`context.go`](./context.go) - 请求上下文、洋葱圈流转与多格式渲染（JSON/HTML/Data）
-  * [`response_writer.go`](./response_writer.go) - 状态码与响应体双重拦截包装器
-* **专业功能子模块**：
-  * [`inject/`](./inject/) - 依赖注入容器核心（`Map`, `MapTo`, `Invoke`, `Apply`）
-  * [`router/`](./router/) - 前缀树（Trie）路由器、路由分组与参数解析
-  * [`db/`](./db/) - 数据库连接管理与增强型 ActiveRecord QueryBuilder (Like, Join, Paginate)
-  * [`session/`](./session/) - 服务端会话管理与安全签名 CookieStore
-  * [`binding/`](./binding/) - 请求参数绑定与基于 Struct Tag 的轻量验证器
-  * [`middleware/`](./middleware/) - 内置中间件（Logger、Recovery、CORS）
-  * [`daemon/`](./daemon/) - 跨平台服务生命周期与守护进程管理器（start/stop/restart/status）
-  * [`tray/`](./tray/) - 跨平台系统托盘与状态栏常驻客户端模式（macOS/Windows/Linux 0 依赖）
-* **通用工具集 (`utils/`)**：
-  * [`utils/str/`](./utils/str/) - 字符串处理、脱敏、哈希与随机生成
-  * [`utils/upload/`](./utils/upload/) - 文件上传安全处理类与存储校验器
-* **命令行与开箱即用示例**：
-  * [`cmd/godeniter/`](./cmd/godeniter/) - 官方 CLI 脚手架工具 (`godeniter new`)
-  * [`cmd/rsrc/`](./cmd/rsrc/) - 纯 Go 标准库 Windows 图标资源段编译器 (`.ico` -> `.syso`)
-  * [`cmd/cert/`](./cmd/cert/) - 纯 Go 标准库 Windows 代码签名自签证书生成工具 (0 依赖 RSA+X.509)
-  * [`examples/01_api_spa/`](./examples/01_api_spa/) - 架构模式一：前后端分离 RESTful API + SPA 单页 (带文件上传与分页) 完整 Demo
-  * [`examples/02_mvc_template/`](./examples/02_mvc_template/) - 架构模式二：经典服务端渲染 MVC + HTML Template 套页面 (带头像上传与搜索) 完整 Demo
-  * [`examples/database_mysql/`](./examples/database_mysql/) - 数据库实战工程：MySQL 连接池、CRUD 与事务操作完整示例
-  * [`dist/`](./dist/) - 编译生成的跨平台单文件可执行程序输出目录
-* **核心文档与开发手册 (`docs/`)**：
-  * [`docs/database.md`](./docs/database.md) - 数据库与 ActiveRecord 开发手册 (含 MySQL 生产连接池与 CRUD 实战)
-  * [`docs/config.md`](./docs/config.md) - 0 依赖动态配置 (`config.json`)、数据库连接与客户机端口修改手册
-  * [`docs/daemon.md`](./docs/daemon.md) - 服务生命周期与守护进程运维手册 (start/stop/restart/status)
-  * [`docs/tray.md`](./docs/tray.md) - 跨平台桌面系统托盘与状态栏常驻模式手册 (macOS/Windows/Linux)
-  * [`docs/code_signing.md`](./docs/code_signing.md) - Windows 数字签名与代码证书实战手册 (防拦截、防杀软误报与一键信任)
-  * [`docs/build_and_deploy.md`](./docs/build_and_deploy.md) - 跨平台单文件打包与 Windows 客户机交付手册
-  * [`docs/offline.md`](./docs/offline.md) - 离线环境与受限网络开发/编译指南 (Zip 包即用与单文件交付)
-  * [`docs/progress.md`](./docs/progress.md) - 框架开发进度、架构设计原则与版本演进记录
+Godeniter 秉承极简架构与清晰分层，以下为框架核心工程每一个文件与模块的具体职责说明：
+
+### 1. 框架核心基座 (Root Core)
+| 文件路径 | 职责说明 |
+| :--- | :--- |
+| [`godeniter.go`](./godeniter.go) | **框架总入口**：定义 `Engine` 核心结构、`Classic()` 预装引擎、优雅停机 (`Run`)、HTML 模板载入与全局 HTTP 分发 (`ServeHTTP`)。 |
+| [`context.go`](./context.go) | **请求上下文**：封装单个 HTTP 请求生命周期、洋葱圈流转 (`Next`/`Abort`)、依赖注入容器继承、JSON/HTML 多格式响应与 `WrapMiddleware` 桥接器。 |
+| [`response_writer.go`](./response_writer.go) | **响应写入拦截器**：包装原生 `http.ResponseWriter`，具备状态码捕获、字节大小统计、`Written()` 状态检测与 `Before` 钩子能力。 |
+
+### 2. 专业子系统模块
+| 子模块 | 包含文件 | 职责说明 |
+| :--- | :--- | :--- |
+| **`router/`**<br>(Trie 路由) | `router.go`<br>`trie.go`<br>`group.go` | **前缀树路由引擎**：支持动态参数 `:id`、全路径通配符 `*path`、HTTP 动词隔离；提供多级分组 (`Group`)、分组中间件绑定及公开 `Middlewares()` 导出。 |
+| **`inject/`**<br>(依赖注入) | `inject.go` | **轻量级运行时 DI 容器**：提供类型绑定 (`Map`)、接口抽象绑定 (`MapTo`)、函数动态参数反射调用 (`Invoke`) 与结构体注入 (`Apply`)，支持父子容器分层继承。 |
+| **`db/`**<br>(数据库基建) | `db.go`<br>`builder.go`<br>`scanner.go`<br>`paginate.go`<br>`tx.go` | **纯标准库 ActiveRecord 体验**：基于 `database/sql` 封装链式 SQL 构建器（`Where`, `Like`, `Join`, `OrderBy`）；自动反射扫描到结构体（`Scan`）；内置智能分页与原子事务操作。 |
+| **`session/`**<br>(会话管理) | `session.go`<br>`cookie_store.go` | **防篡改服务端 Session**：纯标准库实现类似 PHP `$_SESSION` 的极简体验；内置 HMAC-SHA256 安全签名 `CookieStore`，支持一次性 Flash 闪存提示消息。 |
+| **`binding/`**<br>(参数校验) | `binding.go`<br>`validator.go` | **结构体 Tag 绑定与验证**：无需厚重第三方校验库，纯标准库反射解析 `binding:"required,min=,max=,email,numeric"`，输出规范的 `ValidationError`。 |
+| **`storage/`**<br>(多存储驱动) | `storage.go`<br>`local.go`<br>`webdav.go`<br>`s3.go` | **纯 Go 轻量多存储驱动 (0 外部 SDK)**：定义统一 `Driver` 文件流接口；支持本地磁盘、WebDAV（坚果云/Nextcloud）及手写 AWS SigV4 签名的 S3 / Cloudflare R2 / 阿里云 OSS / MinIO。 |
+| **`middleware/`**<br>(中间件生态) | `cors.go`<br>`logger.go`<br>`recovery.go`<br>`security.go`<br>`timer.go`<br>`keyauth.go` | **企业级安全与运维流水线**：CORS 跨域；彩色控制台日志；Panic 崩溃防御；标准 Web 安全头注入 (`Security`)；敏感文件嗅探拦截 (`BlockSensitive`)；W3C `Server-Timing` 耗时追踪；API Key 鉴权 (`KeyAuth`)。 |
+| **`daemon/`**<br>(守护进程) | `daemon.go`<br>`daemon_unix.go`<br>`daemon_windows.go` | **跨平台服务生命周期接管**：支持类 Nginx 指令 (`start`, `stop`, `restart`, `status`)；Linux/macOS 系统调用 Setsid 脱离终端；Windows 使用 `DETACHED_PROCESS` 隐身。 |
+| **`tray/`**<br>(系统托盘) | `tray.go`<br>`tray_windows.go`<br>`tray_darwin.go`<br>`tray_other.go` | **0-CGO 跨平台系统托盘/状态栏客户端**：macOS 原生 Cocoa 状态栏常驻；Windows 纯 Go `syscall` 调用 Win32 API 驱动右下角托盘，原生隐藏控制台黑框。 |
+
+### 3. 工具库体系 (`utils/`)
+| 工具包 | 包含文件 | 职责说明 |
+| :--- | :--- | :--- |
+| **`utils/str/`** | `str.go` | **安全与字符串辅助**：高强度随机串生成、UUIDv4、命名风格转换（驼峰/蛇形/短横线）、UTF-8 字符截断、敏感信息脱敏（手机/邮箱/身份证）、XSS 安全过滤。 |
+| **`utils/upload/`** | `upload.go` | **文件上传辅助**：安全接收与存储客户端上传文件，提供最大字节数限制、后缀扩展名白名单检测与自动安全重命名。 |
+| **`utils/rsrc/`** | `rsrc.go` | **纯标准库 Windows 图标编译器**：直接将 `.ico` 解析并编译为 Windows COFF 格式的 `resource_windows_amd64.syso`，供 Go 编译器静态缝合进 `.exe`。 |
+
+### 4. 命令行工具 (`cmd/`)
+| 命令工具 | 包含文件 | 职责说明 |
+| :--- | :--- | :--- |
+| **`cmd/godeniter/`** | `main.go` | **官方 CLI 脚手架生成器**：类似 `php artisan` 或 `codeigniter spark`，支持一键创建前后端分离 API 或经典 MVC 工程模版。 |
+| **`cmd/rsrc/`** | `main.go` | **Windows 图标编译 CLI**：命令行一键执行 `rsrc -ico app.ico -o resource_windows_amd64.syso`，纯标准库 0 外部依赖。 |
+| **`cmd/cert/`** | `main.go` | **纯 Go 代码签名证书生成器**：基于纯 Go 标准库生成自签名 RSA 2048 位根证书，直接导出 `.key`、`.cer` 与 `.pfx` 签名包，消除 Windows 蓝底拦截。 |
+
+### 5. 示例工程与开发文档 (`examples/` & `docs/`)
+| 目录 | 重点文件 | 职责说明 |
+| :--- | :--- | :--- |
+| **`examples/01_api_spa/`** | `main.go`, `handlers/`, `models/`, `static/` | **架构模式一**：前后端分离 RESTful API + SPA 单页客户端 (带文件上传与分页) 完整打样 Demo。 |
+| **`examples/02_mvc_template/`** | `main.go`, `controllers/`, `models/`, `views/` | **架构模式二**：经典服务端渲染 MVC + HTML Template 套页面 (带头像上传与搜索) 完整打样 Demo。 |
+| **`examples/database_mysql/`** | `main.go`, `schema.sql`, `config.json` | **MySQL 生产实战**：MySQL 连接池建立、CRUD 操作、链式查询与事务回滚演示。 |
+| **`docs/`** | `architecture.md`, `database.md`, `tray.md`, `code_signing.md`, `build_and_deploy.md`, `config.md`, `daemon.md`, `offline.md` | **详尽专有技术手册**：涵盖底层架构设计、数据库实战、桌面托盘、代码签名防拦截、单文件打包与内网断网离线开发指南。 |
 
 ---
 

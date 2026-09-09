@@ -2,6 +2,8 @@
 // Godeniter is licensed under the GNU General Public License v3.0 (GPL-3.0).
 // See LICENSE file in the project root for full license information.
 
+// Package main 提供了纯 Go 标准库实现的 Windows 代码签名证书与公私钥对生成工具。
+// 0 外部依赖，原生生成 RSA 2048 位自签名根证书，支持直接导出 .key、.cer 与 PKCS#12 (.pfx) 签名包，杜绝 Windows 蓝底拦截。
 package main
 
 import (

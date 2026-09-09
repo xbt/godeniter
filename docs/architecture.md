@@ -104,6 +104,23 @@
 * **Windows 端**：100% 纯 Go 标准库 `syscall` Win32 API（`shell32.dll` 与 `user32.dll`）驱动，0 CGO 免编译门槛；遵循 KB139526 规范避免二次右键失灵。
 * **优雅停机协同**：捕获系统退出信号，实现点击退出或终端 Ctrl+C 时安全平滑关闭 HTTP 服务并秒级退出。
 
+### 11. 纯 Go 轻量多存储驱动接口 (`storage/`)
+* **统一 `storage.Driver` 抽象**：提供 `Name()`, `Save()`, `Delete()` 标准文件流操作规范。
+* **0 外部庞大 SDK 依赖**：摒弃数百兆的 AWS 官方 SDK，纯粹基于标准库 `crypto/hmac` 与 `crypto/sha256` 手写实现了 **AWS SigV4 规范签名算法**。
+* **多环境自由切换**：统一抽象原生支持 **Local 本地文件**、**HTTP WebDAV**（坚果云/Nextcloud）以及 **S3 / Cloudflare R2 / 阿里云 OSS / MinIO** 对象存储。
+
+### 12. 生产级安全防护与监控中间件体系 (`middleware/`)
+* **`middleware.Security()`**：开箱即用地为所有响应注入 `X-Content-Type-Options: nosniff`、`X-Frame-Options: SAMEORIGIN`、`X-XSS-Protection`、`Referrer-Policy` 等行业基准安全标头。
+* **`middleware.BlockSensitive()`**：探测并阻断针对 `.db`、`.sqlite`、`config.json`、`.env`、`.git`、`.svn` 等敏感物理资源的恶意嗅探，直接以 403 Forbidden 阻断。
+* **`middleware.ServerTiming()`**：计算中间件链路耗时，注入 `X-Response-Time` 及 W3C 标准 `Server-Timing: app;dur=x.xx` 标头。
+* **`middleware.KeyAuth()`**：多通道提取凭证（Bearer Header / X-API-Key / QueryParam）并执行高效回调校验。
+* **`godeniter.WrapMiddleware()` 桥接工具**：将标准 `func(res, req, next)` 签名中间件转为 `HandlerFunc`，并在底层中间件未调用 `next()` 时自动安全执行 `c.Abort()`。
+* **未命中路由安全前置调度**：即使客户端请求了未注册的路径（404），全局中间件流水线依然安全前置执行，保证 403 阻断、CORS 标头与请求访问日志永不丢失。
+
+### 13. 纯 Go 代码签名与证书生成工具 (`cmd/cert/`)
+* **0 依赖证书生成**：基于纯 Go 标准库 `crypto/rsa` 与 `crypto/x509`，单命令即可生成具备自签名代码签名属性的 RSA 2048 位根证书。
+* **多格式安全导出**：支持直接导出 `.key` 私钥、`.cer` 公钥及 PKCS#12 (`.pfx`) 代码签名包，帮助解决 Windows SmartScreen 拦截与“未知发布者”蓝底弹窗。
+
 ---
 
 ## 四、 后续演进路线建议

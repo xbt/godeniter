@@ -2,6 +2,8 @@
 // Godeniter is licensed under the GNU General Public License v3.0 (GPL-3.0).
 // See LICENSE file in the project root for full license information.
 
+// Package main 提供了纯 Go 标准库实现的 Windows 资源段 (.syso) 生成命令行工具。
+// 无需安装 mingw-w64、windres 或 gcc，即可直接将 app.ico 转换为 resource_windows_amd64.syso 并让 Go 编译器自动内嵌为 exe 桌面图标。
 package main
 
 import (
