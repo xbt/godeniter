@@ -182,3 +182,44 @@ func TestCronErrorHandling(t *testing.T) {
 		t.Errorf("任务错误状态未正确记录: %+v", snap)
 	}
 }
+
+// TestCronUpdateJob 测试动态更新任务规格与名称
+func TestCronUpdateJob(t *testing.T) {
+	c := New()
+
+	_, err := c.Add("backup", "旧备份任务", "0 0 3 * * *", func() error {
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	snap1 := c.GetJob("backup")
+	if snap1.Spec != "0 0 3 * * *" || snap1.Name != "旧备份任务" {
+		t.Fatalf("初始任务状态不符: %+v", snap1)
+	}
+
+	// 1. 合法更新为每天凌晨 4 点
+	err = c.Update("backup", "新备份任务", "0 0 4 * * *")
+	if err != nil {
+		t.Fatalf("更新任务失败: %v", err)
+	}
+
+	snap2 := c.GetJob("backup")
+	if snap2.Spec != "0 0 4 * * *" || snap2.Name != "新备份任务" {
+		t.Fatalf("更新后任务规格未生效: %+v", snap2)
+	}
+
+	// 2. 非法语法更新应被拦截
+	errBad := c.Update("backup", "非法表达式任务", "99 99 * * *")
+	if errBad == nil {
+		t.Fatalf("非法表达式预期报错，实际返回 nil")
+	}
+
+	// 3. 不存在的任务报错
+	errNotExist := c.Update("not_exist", "不存在", "0 0 1 * * *")
+	if errNotExist == nil {
+		t.Fatalf("不存在的任务预期报错，实际返回 nil")
+	}
+}
+

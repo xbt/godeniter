@@ -225,6 +225,37 @@ func (c *Cron) Resume(id string) error {
 	return nil
 }
 
+// Update 更新已注册任务的调度规格 (Cron 表达式) 与任务名称。
+// 立即通过 Parse 校验新表达式，若合法则更新任务规格、自然语言释义，并根据新规则重算下次执行时间（秒级热生效）。
+func (c *Cron) Update(id, newName, newSpec string) error {
+	schedule, err := Parse(newSpec)
+	if err != nil {
+		return err
+	}
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	job, exists := c.jobMap[id]
+	if !exists {
+		return fmt.Errorf("cron: 任务 [%s] 不存在", id)
+	}
+
+	now := time.Now().Truncate(time.Second)
+	job.mu.Lock()
+	if newName != "" {
+		job.Name = newName
+	}
+	job.Spec = newSpec
+	job.HumanSpec = schedule.HumanString()
+	job.Schedule = schedule
+	if job.Enabled {
+		job.NextTime = schedule.Next(now)
+	}
+	job.mu.Unlock()
+	return nil
+}
+
 // Trigger 手动立即异步触发一次指定任务（执行耗时与状态即时更新，不影响其原定下次计划时间）。
 func (c *Cron) Trigger(id string) error {
 	c.mu.RLock()
