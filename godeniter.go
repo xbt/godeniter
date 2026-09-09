@@ -8,6 +8,7 @@ package godeniter
 import (
 	"context"
 	"fmt"
+	"github.com/xbt/godeniter/cron"
 	"github.com/xbt/godeniter/inject"
 	"github.com/xbt/godeniter/router"
 	"github.com/xbt/godeniter/session"
@@ -26,7 +27,6 @@ import (
 	"strings"
 	"syscall"
 	"time"
-
 )
 
 // Engine 是 Godeniter 框架的核心实例，负责管理全局依赖注入容器、路由注册与 HTTP 请求分发。
@@ -38,6 +38,7 @@ type Engine struct {
 	htmlTemplates *template.Template // 全局 HTML 模板实例
 	funcMap       template.FuncMap   // 模板渲染函数映射表
 	NotFound      HandlerFunc        // 自定义 404 Not Found 处理函数
+	Cron          *cron.Cron         // 内置计划任务调度引擎
 }
 
 // New 创建并返回一个全新的 Godeniter Engine 实例。
@@ -45,6 +46,7 @@ func New() *Engine {
 	engine := &Engine{
 		Injector: inject.New(),
 		router:   router.NewRouter(),
+		Cron:     cron.New(),
 	}
 	// 创建根路由分组，并将 Engine 本身作为 bridge 传入
 	engine.RouterGroup = router.NewRouterGroup(engine)
@@ -156,6 +158,16 @@ func (engine *Engine) Get(pattern string, handlers ...interface{}) {
 // GetDependency 从全局注入容器中获取指定类型的依赖对象。
 func (engine *Engine) GetDependency(t reflect.Type) reflect.Value {
 	return engine.Injector.Get(t)
+}
+
+// Schedule 向引擎注册一个定时任务 (spec 支持 6 段秒级、5 段分钟级与常用语义宏)
+func (engine *Engine) Schedule(id, name, spec string, fn cron.JobFunc) (*cron.Job, error) {
+	return engine.Cron.Add(id, name, spec, fn)
+}
+
+// Every 向引擎注册一个基于时间间隔的快捷任务 (如 10 * time.Second)
+func (engine *Engine) Every(id, name string, d time.Duration, fn cron.JobFunc) (*cron.Job, error) {
+	return engine.Cron.Every(id, name, d, fn)
 }
 
 // templateCommentRegex 匹配 <!--{{ ... }}--> 无侵入模板注释语法
@@ -328,6 +340,9 @@ func (engine *Engine) Run(addr ...string) error {
 	stopChan := make(chan os.Signal, 1)
 	signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM)
 
+	// 启动计划任务调度引擎
+	engine.Cron.Start()
+
 	serverErr := make(chan error, 1)
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -352,6 +367,7 @@ func (engine *Engine) Run(addr ...string) error {
 		fmt.Printf("\n >> 接收到终止信号 [%s]，正在平滑关闭服务 (Graceful Shutdown)...\n", sig)
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
+		_ = engine.Cron.Stop(ctx)
 		if err := srv.Shutdown(ctx); err != nil {
 			fmt.Printf(" >> 强制关闭服务异常: %v\n", err)
 			return err
