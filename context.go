@@ -28,6 +28,21 @@ type H map[string]interface{}
 // HandlerFunc 定义了高性能显式 Context 的标准处理函数签名。
 type HandlerFunc func(c *Context)
 
+// WrapMiddleware 将 func(http.ResponseWriter, *http.Request, func()) 标准签名中间件包装为 HandlerFunc。
+// 若底层中间件未调用 next()，将自动调用 c.Abort() 中断后续处理链。
+func WrapMiddleware(mw func(http.ResponseWriter, *http.Request, func())) HandlerFunc {
+	return func(c *Context) {
+		called := false
+		mw(c.Res, c.Req, func() {
+			called = true
+			c.Next()
+		})
+		if !called {
+			c.Abort()
+		}
+	}
+}
+
 // Context 封装了单次 HTTP 请求的全部生命周期与环境上下文。
 // 内部嵌入了 inject.Injector，具备请求级的依赖注入能力（继承全局 App 注入器）。
 type Context struct {

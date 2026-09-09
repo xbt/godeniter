@@ -66,6 +66,11 @@ func (group *RouterGroup) Use(middlewares ...interface{}) {
 	group.middlewares = append(group.middlewares, middlewares...)
 }
 
+// Middlewares 获取当前分组绑定的全部中间件列表。
+func (group *RouterGroup) Middlewares() []interface{} {
+	return append([]interface{}{}, group.middlewares...)
+}
+
 // getCombinedMiddlewares 获取当前分组（及所有上级父分组）累加后的全部中间件列表。
 func (group *RouterGroup) getCombinedMiddlewares() []interface{} {
 	return append([]interface{}{}, group.middlewares...)

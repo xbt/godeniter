@@ -293,14 +293,16 @@ func (engine *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		// 将提取到的动态路由参数映射到当前请求级注入容器中
 		c.Map(c.Params)
 	} else {
-		// 路由未命中：执行自定义或默认 404 处理
+		// 路由未命中：前置全局中间件 (保证 Logger/Recovery/CORS/Security/BlockSensitive 同样在未命中路径上生效)
+		handlers := append([]interface{}{}, engine.RouterGroup.Middlewares()...)
 		if engine.NotFound != nil {
-			c.handlers = []interface{}{engine.NotFound}
+			handlers = append(handlers, engine.NotFound)
 		} else {
-			c.handlers = []interface{}{func(ctx *Context) {
+			handlers = append(handlers, func(ctx *Context) {
 				ctx.String(http.StatusNotFound, "404 Not Found: %s %s\n", ctx.Method, ctx.Path)
-			}}
+			})
 		}
+		c.handlers = handlers
 	}
 
 	// 启动中间件与 Handler 执行链路
