@@ -329,7 +329,7 @@ func (engine *Engine) Run(addr ...string) error {
 		listenAddr = addr[0]
 	}
 
-	printBanner(listenAddr)
+	PrintBanner(listenAddr)
 
 	srv := &http.Server{
 		Addr:    listenAddr,
@@ -377,8 +377,8 @@ func (engine *Engine) Run(addr ...string) error {
 	}
 }
 
-// printBanner 打印服务启动横幅与本地/局域网访问地址。
-func printBanner(addr string) {
+// PrintBanner 打印服务启动横幅与本地/局域网访问地址。
+func PrintBanner(addr string) {
 	port := addr
 	if strings.HasPrefix(addr, ":") {
 		port = addr[1:]

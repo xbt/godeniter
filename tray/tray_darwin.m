@@ -21,8 +21,20 @@ extern void trayMenuItemCallback(int id);
 }
 @end
 
+@interface GodeniterAppDelegate : NSObject <NSApplicationDelegate>
+- (NSMenu *)applicationDockMenu:(NSApplication *)sender;
+@end
+
 static NSStatusItem *globalStatusItem = nil;
 static GodeniterTrayActionTarget *globalActionTarget = nil;
+static GodeniterAppDelegate *globalAppDelegate = nil;
+static NSMenu *globalDockMenu = nil;
+
+@implementation GodeniterAppDelegate
+- (NSMenu *)applicationDockMenu:(NSApplication *)sender {
+    return globalDockMenu;
+}
+@end
 
 void native_init_app(void) {
     @autoreleasepool {
@@ -35,6 +47,10 @@ void native_init_app(void) {
         }
         if (!globalActionTarget) {
             globalActionTarget = [[GodeniterTrayActionTarget alloc] init];
+        }
+        if (!globalAppDelegate) {
+            globalAppDelegate = [[GodeniterAppDelegate alloc] init];
+            [NSApp setDelegate:globalAppDelegate];
         }
         [NSApp finishLaunching];
     }
@@ -76,31 +92,37 @@ void native_create_status_bar(const void* icon_bytes, size_t icon_len, const cha
 
 void native_update_menu(TrayMenuItemC* items, int count) {
     @autoreleasepool {
-        if (!globalStatusItem) return;
         NSMenu *menu = [[NSMenu alloc] init];
         [menu setAutoenablesItems:NO];
+
+        globalDockMenu = [[NSMenu alloc] init];
+        [globalDockMenu setAutoenablesItems:NO];
+
         for (int i = 0; i < count; i++) {
             if (items[i].is_separator) {
                 [menu addItem:[NSMenuItem separatorItem]];
+                [globalDockMenu addItem:[NSMenuItem separatorItem]];
             } else {
                 NSString *title = [NSString stringWithUTF8String:items[i].title];
+
                 NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:title action:@selector(menuItemClicked:) keyEquivalent:@""];
                 [item setTarget:globalActionTarget];
                 [item setTag:items[i].callback_id];
-                if (items[i].disabled) {
-                    [item setEnabled:NO];
-                } else {
-                    [item setEnabled:YES];
-                }
-                if (items[i].checked) {
-                    [item setState:NSControlStateValueOn];
-                } else {
-                    [item setState:NSControlStateValueOff];
-                }
+                if (items[i].disabled) [item setEnabled:NO]; else [item setEnabled:YES];
+                if (items[i].checked) [item setState:NSControlStateValueOn]; else [item setState:NSControlStateValueOff];
                 [menu addItem:item];
+
+                NSMenuItem *dockItem = [[NSMenuItem alloc] initWithTitle:title action:@selector(menuItemClicked:) keyEquivalent:@""];
+                [dockItem setTarget:globalActionTarget];
+                [dockItem setTag:items[i].callback_id];
+                if (items[i].disabled) [dockItem setEnabled:NO]; else [dockItem setEnabled:YES];
+                if (items[i].checked) [dockItem setState:NSControlStateValueOn]; else [dockItem setState:NSControlStateValueOff];
+                [globalDockMenu addItem:dockItem];
             }
         }
-        [globalStatusItem setMenu:menu];
+        if (globalStatusItem) {
+            [globalStatusItem setMenu:menu];
+        }
     }
 }
 
