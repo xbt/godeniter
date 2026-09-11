@@ -46,6 +46,8 @@ var (
 	procGetModuleHandleW        = modkernel32.NewProc("GetModuleHandleW")
 	procGetConsoleWindow        = modkernel32.NewProc("GetConsoleWindow")
 	procShowWindow              = moduser32.NewProc("ShowWindow")
+	procAttachConsole           = modkernel32.NewProc("AttachConsole")
+	procGetStdHandle            = modkernel32.NewProc("GetStdHandle")
 )
 
 const (
@@ -67,6 +69,24 @@ func ShowConsole() {
 	if hwnd != 0 {
 		procShowWindow.Call(hwnd, uintptr(SW_SHOW))
 	}
+}
+
+// AttachConsole 在 Windows GUI 模式下，若当前程序是由父级控制台 (如 CMD 或 PowerShell) 启动的，
+// 自动将标准输出与标准错误重定向绑定至父级终端，使单一可执行文件既能在桌面无黑框运行，又能在终端输出日志。
+func AttachConsole() bool {
+	r, _, _ := procAttachConsole.Call(uintptr(0xFFFFFFFF)) // ATTACH_PARENT_PROCESS = (DWORD)-1
+	if r == 0 {
+		return false
+	}
+	hOut, _, _ := procGetStdHandle.Call(uintptr(0xFFFFFFF5)) // STD_OUTPUT_HANDLE = (DWORD)-11
+	if hOut != 0 && hOut != uintptr(syscall.InvalidHandle) {
+		os.Stdout = os.NewFile(hOut, "/dev/stdout")
+	}
+	hErr, _, _ := procGetStdHandle.Call(uintptr(0xFFFFFFF4)) // STD_ERROR_HANDLE = (DWORD)-12
+	if hErr != 0 && hErr != uintptr(syscall.InvalidHandle) {
+		os.Stderr = os.NewFile(hErr, "/dev/stderr")
+	}
+	return true
 }
 
 const (

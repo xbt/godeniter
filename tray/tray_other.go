@@ -66,3 +66,8 @@ func HideConsole() {}
 
 // ShowConsole 在非 Windows 环境下为空实现
 func ShowConsole() {}
+
+// AttachConsole 在非 Windows 环境下为空实现
+func AttachConsole() bool {
+	return true
+}
