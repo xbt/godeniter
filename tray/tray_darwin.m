@@ -27,8 +27,12 @@ static GodeniterTrayActionTarget *globalActionTarget = nil;
 void native_init_app(void) {
     @autoreleasepool {
         [NSApplication sharedApplication];
-        // 设置为 Accessory 模式: 状态栏常驻，不占用 Dock 栏图标
-        [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
+        // 若在终端直接运行二进制 (非 .app Bundle)，保持 Accessory 模式
+        CFBundleRef mainBundle = CFBundleGetMainBundle();
+        CFDictionaryRef infoDict = mainBundle ? CFBundleGetInfoDictionary(mainBundle) : NULL;
+        if (!infoDict) {
+            [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
+        }
         if (!globalActionTarget) {
             globalActionTarget = [[GodeniterTrayActionTarget alloc] init];
         }
@@ -54,6 +58,7 @@ void native_create_status_bar(const void* icon_bytes, size_t icon_len, const cha
             NSImage *img = [[NSImage alloc] initWithData:data];
             if (img && [img isValid]) {
                 [img setSize:NSMakeSize(18, 18)];
+                [img setTemplate:YES];
                 [button setImage:img];
                 [button setImagePosition:NSImageOnly];
                 [button setTitle:@""];
