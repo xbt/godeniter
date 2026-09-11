@@ -307,6 +307,16 @@ func Quit() {
 	}
 }
 
+// ShowAlert 弹出原生警告提示框 (阻塞至用户点击确定)
+func ShowAlert(title, message string) {
+	procMessageBoxW.Call(
+		0,
+		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(message))),
+		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(title))),
+		MB_ICONINFO|MB_OK,
+	)
+}
+
 // ShowAbout 弹出 Windows 原生消息弹窗
 func ShowAbout(opts Options) {
 	appTitle := opts.Title
@@ -320,12 +330,7 @@ func ShowAbout(opts Options) {
 	msg := fmt.Sprintf("名称: %s\n版本: %s\n进程 PID: %d\n监听端口: %s\n底层框架: Godeniter (Go %s)",
 		appTitle, version, os.Getpid(), opts.Port, runtime.Version())
 
-	procMessageBoxW.Call(
-		globalHWnd,
-		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(msg))),
-		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr("关于 "+appTitle))),
-		MB_ICONINFO|MB_OK,
-	)
+	ShowAlert("关于 "+appTitle, msg)
 }
 
 // showWindowsTrayMenu 弹出右键菜单

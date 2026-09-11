@@ -47,6 +47,11 @@ func Quit() {
 	}
 }
 
+// ShowAlert 降级输出警告信息到控制台
+func ShowAlert(title, message string) {
+	fmt.Printf("\n[ALERT: %s]\n%s\n\n", title, message)
+}
+
 // ShowAbout 打印应用关于信息到控制台
 func ShowAbout(opts Options) {
 	appTitle := opts.Title
@@ -57,8 +62,10 @@ func ShowAbout(opts Options) {
 	if version == "" {
 		version = "v1.0.0"
 	}
-	fmt.Printf("\n--- 关于 %s ---\n版本: %s\n进程 PID: %d\n监听端口: %s\n底层框架: Godeniter (Go %s)\n---------------------\n\n",
+	msg := fmt.Sprintf("名称: %s\n版本: %s\n进程 PID: %d\n监听端口: %s\n底层框架: Godeniter (Go %s)",
 		appTitle, version, os.Getpid(), opts.Port, runtime.Version())
+
+	ShowAlert("关于 "+appTitle, msg)
 }
 
 // HideConsole 在非 Windows 环境下为空实现

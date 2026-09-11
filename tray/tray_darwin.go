@@ -141,6 +141,15 @@ func Quit() {
 	C.native_quit_loop()
 }
 
+// ShowAlert 弹出原生警告提示框 (阻塞至用户点击确定)
+func ShowAlert(title, message string) {
+	cTitle := C.CString(title)
+	cMsg := C.CString(message)
+	defer C.free(unsafe.Pointer(cTitle))
+	defer C.free(unsafe.Pointer(cMsg))
+	C.native_show_alert(cTitle, cMsg)
+}
+
 // ShowAbout 弹出关于对话框
 func ShowAbout(opts Options) {
 	appTitle := opts.Title
@@ -154,12 +163,7 @@ func ShowAbout(opts Options) {
 	msg := fmt.Sprintf("名称: %s\n版本: %s\n进程 PID: %d\n监听端口: %s\n底层框架: Godeniter (Go %s)",
 		appTitle, version, os.Getpid(), opts.Port, runtime.Version())
 
-	cTitle := C.CString("关于 " + appTitle)
-	cMsg := C.CString(msg)
-	defer C.free(unsafe.Pointer(cTitle))
-	defer C.free(unsafe.Pointer(cMsg))
-
-	C.native_show_alert(cTitle, cMsg)
+	ShowAlert("关于 "+appTitle, msg)
 }
 
 // buildFullMenuItems 组装经典四件套与开发者自定义菜单

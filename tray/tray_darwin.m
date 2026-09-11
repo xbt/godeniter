@@ -39,7 +39,7 @@ void native_init_app(void) {
 void native_create_status_bar(const void* icon_bytes, size_t icon_len, const char* fallback_title, const char* tooltip) {
     @autoreleasepool {
         if (!globalStatusItem) {
-            // 使用自适应宽度，避免在刘海屏或文字较多时被系统截断隐藏
+            // 使用自适应宽度 (纯图标模式下仅占约 22px，完美适配 MacBook 刘海屏)
             globalStatusItem = [[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength];
         }
         NSStatusBarButton *button = [globalStatusItem button];
@@ -47,7 +47,6 @@ void native_create_status_bar(const void* icon_bytes, size_t icon_len, const cha
             [button setToolTip:[NSString stringWithUTF8String:tooltip]];
         }
 
-        NSString *title = (fallback_title && strlen(fallback_title) > 0) ? [NSString stringWithUTF8String:fallback_title] : @"Godeniter";
         BOOL iconSet = NO;
 
         if (icon_bytes && icon_len > 0) {
@@ -55,17 +54,16 @@ void native_create_status_bar(const void* icon_bytes, size_t icon_len, const cha
             NSImage *img = [[NSImage alloc] initWithData:data];
             if (img && [img isValid]) {
                 [img setSize:NSMakeSize(18, 18)];
-                // 保持原图色彩，不盲目 setTemplate:YES，避免彩色图标在 Dark Mode 深色菜单栏下变黑隐形
                 [button setImage:img];
-                [button setImagePosition:NSImageLeft];
-                [button setTitle:[NSString stringWithFormat:@" %@", title]];
+                [button setImagePosition:NSImageOnly];
+                [button setTitle:@""];
                 iconSet = YES;
             }
         }
 
         if (!iconSet) {
-            // 回退方案: 图标与标题结合，Emoji 🚀 无论浅色还是深色模式均 100% 显眼可见
-            [button setTitle:[NSString stringWithFormat:@"🚀 %@", title]];
+            // 回退方案: 仅展示单个紧凑 Emoji 🚀 (约 18-20px 宽)，杜绝任何长标题被刘海屏截断隐藏
+            [button setTitle:@"🚀"];
             [button setImage:nil];
         }
     }
@@ -128,15 +126,22 @@ void native_quit_loop(void) {
 }
 
 void native_show_alert(const char* title, const char* message) {
-    dispatch_async(dispatch_get_main_queue(), ^{
+    void (^showAlertBlock)(void) = ^{
         @autoreleasepool {
+            [NSApplication sharedApplication];
             NSAlert *alert = [[NSAlert alloc] init];
             [alert setMessageText:[NSString stringWithUTF8String:title]];
             [alert setInformativeText:[NSString stringWithUTF8String:message]];
-            [alert setAlertStyle:NSAlertStyleInformational];
+            [alert setAlertStyle:NSAlertStyleCritical];
             [alert addButtonWithTitle:@"确定"];
             [[alert window] setLevel:NSFloatingWindowLevel];
             [alert runModal];
         }
-    });
+    };
+
+    if ([NSThread isMainThread]) {
+        showAlertBlock();
+    } else {
+        dispatch_sync(dispatch_get_main_queue(), showAlertBlock);
+    }
 }
